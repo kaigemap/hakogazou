@@ -1,3 +1,5 @@
+import * as THREE from 'https://unpkg.com/three@0.159.0/build/three.module.js';
+
 // three.jsの初期化部分
 const container = document.getElementById('canvas-container');
 const scene = new THREE.Scene();
@@ -561,18 +563,3 @@ function detectFaceFromFilename(filename) {
   }
   return null;
 }
-
-// カメラ位置更新関数
-function updateCameraPosition() {
-  const distance = parseFloat(document.getElementById('cameraDistance').value);
-  const xAngle = parseFloat(document.getElementById('cameraX').value) * Math.PI / 180;
-  const yAngle = parseFloat(document.getElementById('cameraY').value) * Math.PI / 180;
-
-  camera.position.x = distance * Math.cos(xAngle) * Math.sin(yAngle);
-  camera.position.y = distance * Math.sin(xAngle);
-  camera.position.z = distance * Math.cos(xAngle) * Math.cos(yAngle);
-  
-  camera.lookAt(0, 0, 0);
-}
-
-// アニメーションの終了
