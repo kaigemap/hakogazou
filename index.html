@@ -162,28 +162,24 @@
 
       <div class="card">
         <h2>3Dプレビュー</h2>
-        <div id="canvas-container" class="canvas-container"></div>
-        
-        <div class="control-group">
-          <button id="download">
-            <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
-              <path fill="none" d="M0 0h24v24H0z"/>
-              <path d="M4 19h16v-7h2v8a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1v-8h2v7zm9-10v7h-2V9H6l6-6 6 6h-5z" fill="currentColor"/>
-            </svg>
-            画像を保存
-          </button>
-          <button id="reset">
-            <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
-              <path fill="none" d="M0 0h24v24H0z"/>
-              <path d="M12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10-4.477 10-10 10zm0-2a8 8 0 1 0 0-16 8 8 0 0 0 0 16zm0-9h-3v2h3v3h2v-3h3v-2h-3V8h-2v3z" fill="currentColor"/>
-            </svg>
-            リセット
-          </button>
+        <div class="preview-container">
+          <div id="canvas-container" class="canvas-container"></div>
+          
+          <div class="control-group">
+            <button id="download" type="button">
+              <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+                <path fill="none" d="M0 0h24v24H0z"/>
+                <path d="M4 19h16v-7h2v8a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1v-8h2v7zm9-10v7h-2V9H6l6-6 6 6h-5z" fill="currentColor"/>
+              </svg>
+              画像を保存
+            </button>
+          </div>
+          <div class="control-group">
+            <button id="reset" type="button">すべてリセット</button>
+            <button id="resetViewBtn" type="button">視点リセット</button>
+          </div>
         </div>
 
-        <div class="control-group">
-          <button id="resetViewBtn" type="button">視点リセット</button>
-        </div>
       </div>
     </div>
   </div>

@@ -184,14 +184,18 @@ button:hover {
   height: 1.2rem;
 }
 
+.preview-container {
+  position: sticky;
+  top: 1rem;
+}
+
 .canvas-container {
   width: 100%;
   aspect-ratio: 1;
-  position: sticky;
-  top: 1rem;
-  background: white;
+  background: var(--bg);
   border: 1px solid var(--border);
   border-radius: 8px;
+  overflow: hidden;
 }
 
 canvas {

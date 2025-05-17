@@ -40,9 +40,9 @@ function resizeRenderer() {
 // 床の設定
 const groundGeometry = new THREE.PlaneGeometry(100, 100);
 const groundMaterial = new THREE.ShadowMaterial({ 
-  opacity: 0.5,  // 影の濃さ調整
+  opacity: 0.4,  // 影の濃さを少し薄く
   transparent: true,
-  depthWrite: false  // 深度バッファへの書き込みを無効化
+  depthWrite: false,  // 深度バッファへの書き込みを無効化
 });
 const ground = new THREE.Mesh(groundGeometry, groundMaterial);
 ground.rotation.x = -Math.PI / 2;
@@ -51,20 +51,24 @@ ground.receiveShadow = true;
 scene.add(ground);
 
 // ライト設定
-const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.9);
 scene.add(ambientLight);
 
-const directionalLight = new THREE.DirectionalLight(0xffffff, 1.4);
+const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
 directionalLight.position.set(5, 10, 3);
-directionalLight.intensity = 1.0;
+directionalLight.intensity = 0.7;
 directionalLight.castShadow = true;
 directionalLight.shadow.mapSize.width = 2048;
 directionalLight.shadow.mapSize.height = 2048;
-directionalLight.shadow.camera.near = 0.5;
+directionalLight.shadow.camera.near = 0.1;
 directionalLight.shadow.camera.far = 50;
-directionalLight.shadow.radius = 4;
-directionalLight.shadow.bias = -0.00005;
-directionalLight.shadow.normalBias = 0.001;
+directionalLight.shadow.camera.left = -5;
+directionalLight.shadow.camera.right = 5;
+directionalLight.shadow.camera.top = 5;
+directionalLight.shadow.camera.bottom = -5;
+directionalLight.shadow.radius = 8; // ぼかしの半径を大きく
+directionalLight.shadow.bias = -0.00005; // バイアスを調整して影のアーティファクトを軽減
+directionalLight.shadow.normalBias = 0.002; // 法線バイアスを増やしてセルフシャドウイングを改善
 scene.add(directionalLight);
 
 const pointLight = new THREE.PointLight(0xffffff, 0.8);
@@ -89,7 +93,7 @@ function resetCamera() {
     // 真上からの視点
     document.getElementById('cameraX').value = '90';
     document.getElementById('cameraY').value = '0';
-    document.getElementById('cameraDistance').value = '5';
+    document.getElementById('cameraDistance').value = '3.5';
   } else {
     // 真横からの視点
     document.getElementById('cameraX').value = '0';
@@ -128,16 +132,29 @@ function resetBoxRotationAndPosition() {
   const height = geometry.parameters.height;
   const depth = geometry.parameters.depth;
 
+  // 箱の位置と回転を設定
   if (boxOrientation === 'lay') {
-    if (layFace === 'front') {
-      box.rotation.set(-Math.PI/2, 0, 0);
-    } else {
-      box.rotation.set(Math.PI/2, 0, Math.PI);
-    }
-    box.position.y = ground.position.y + (depth / 2) + 0.001;
+      if (layFace === 'front') {
+        box.rotation.set(-Math.PI/2, 0, 0);
+      } else {
+        box.rotation.set(Math.PI/2, 0, Math.PI);
+      }
+      box.position.y = ground.position.y + (depth / 2) + 0.001;
+
+      // 寝かせた時のライト位置
+      directionalLight.position.set(0, 30, -15); // 斜め上からの光
+      directionalLight.intensity = 0.6;
+      pointLight.position.set(-2, 4, -2);
+      fillLight.position.set(2, 4, 2);
   } else {
     box.rotation.set(0, 0, 0);
     box.position.y = ground.position.y + (height / 2) + 0.001;
+
+    // 立てた時のライト位置を設定
+    directionalLight.position.set(5, 10, 3);
+    directionalLight.intensity = 1.4;
+    pointLight.position.set(-3, 3, -3);
+    fillLight.position.set(-3, 5, -5);
   }
 }
 
@@ -272,10 +289,17 @@ function updateCameraFromUI() {
   const yAngle = parseFloat(document.getElementById('cameraY').value) * Math.PI / 180;
   const distance = parseFloat(document.getElementById('cameraDistance').value);
   
+  // 箱が寝ているときは、箱の高さの半分の位置を注視点にする
+  let targetY = 0;
+  if (box && boxOrientation === 'lay') {
+    const depth = box.geometry.parameters.depth;
+    targetY = ground.position.y + (depth / 2);
+  }
+  
   camera.position.x = distance * Math.cos(xAngle) * Math.sin(yAngle);
-  camera.position.y = distance * Math.sin(xAngle);
+  camera.position.y = distance * Math.sin(xAngle) + targetY;
   camera.position.z = distance * Math.cos(xAngle) * Math.cos(yAngle);
-  camera.lookAt(0, 0, 0);
+  camera.lookAt(0, targetY, 0);
 }
 
 // スライダーの値表示を更新
@@ -302,15 +326,15 @@ function createBox() {
   const height = baseHeight;
   const depth = (rightImage.width / rightImage.height) * baseHeight;
 
-  const chamfer = 0.02;
+  const chamfer = 0.08;
   const geometry = new THREE.BoxGeometry(width - chamfer, height - chamfer, depth - chamfer);
   const materials = [
-    new THREE.MeshStandardMaterial({ map: textures.right, roughness: 0.3, metalness: 0.0, emissiveMap: textures.right, emissive: new THREE.Color(0xffffff), emissiveIntensity: 0.15, clearcoat: 0.2      }),
-    new THREE.MeshStandardMaterial({ map: textures.left, roughness: 0.3, metalness: 0.0, emissiveMap: textures.left, emissive: new THREE.Color(0xffffff), emissiveIntensity: 0.15, clearcoat: 0.2      }),
-    new THREE.MeshStandardMaterial({ map: textures.top, roughness: 0.3, metalness: 0.0, emissiveMap: textures.top, emissive: new THREE.Color(0xffffff), emissiveIntensity: 0.15, clearcoat: 0.2      }),
-    new THREE.MeshStandardMaterial({ map: textures.bottom, roughness: 0.3, metalness: 0.0, emissiveMap: textures.bottom, emissive: new THREE.Color(0xffffff), emissiveIntensity: 0.15, clearcoat: 0.2      }),
-    new THREE.MeshStandardMaterial({ map: textures.front, roughness: 0.3, metalness: 0.0, emissiveMap: textures.front, emissive: new THREE.Color(0xffffff), emissiveIntensity: 0.15, clearcoat: 0.2      }),
-    new THREE.MeshStandardMaterial({ map: textures.back, roughness: 0.3, metalness: 0.0, emissiveMap: textures.back, emissive: new THREE.Color(0xffffff), emissiveIntensity: 0.15, clearcoat: 0.2      })
+    new THREE.MeshStandardMaterial({ map: textures.right, roughness: 0.5, metalness: 0.0, emissiveMap: textures.right, emissive: new THREE.Color(0xffffff), emissiveIntensity: 0.09, clearcoat: 0.1 }),
+    new THREE.MeshStandardMaterial({ map: textures.left, roughness: 0.5, metalness: 0.0, emissiveMap: textures.left, emissive: new THREE.Color(0xffffff), emissiveIntensity: 0.09, clearcoat: 0.1 }),
+    new THREE.MeshStandardMaterial({ map: textures.top, roughness: 0.5, metalness: 0.0, emissiveMap: textures.top, emissive: new THREE.Color(0xffffff), emissiveIntensity: 0.09, clearcoat: 0.1 }),
+    new THREE.MeshStandardMaterial({ map: textures.bottom, roughness: 0.5, metalness: 0.0, emissiveMap: textures.bottom, emissive: new THREE.Color(0xffffff), emissiveIntensity: 0.09, clearcoat: 0.1 }),
+    new THREE.MeshStandardMaterial({ map: textures.front, roughness: 0.5, metalness: 0.0, emissiveMap: textures.front, emissive: new THREE.Color(0xffffff), emissiveIntensity: 0.09, clearcoat: 0.1 }),
+    new THREE.MeshStandardMaterial({ map: textures.back, roughness: 0.5, metalness: 0.0, emissiveMap: textures.back, emissive: new THREE.Color(0xffffff), emissiveIntensity: 0.09, clearcoat: 0.1 })
   ];
   
   box = new THREE.Mesh(geometry, materials);
