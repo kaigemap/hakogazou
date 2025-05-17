@@ -187,7 +187,11 @@ button:hover {
 .canvas-container {
   width: 100%;
   aspect-ratio: 1;
-  position: relative;
+  position: sticky;
+  top: 1rem;
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 8px;
 }
 
 canvas {
