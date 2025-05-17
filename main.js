@@ -309,21 +309,15 @@ function handleBulkUpload(files) {
     }
   });
   
-  // 成功した割り当てを表示
-  results.success.forEach(item => {
-    const listItem = document.createElement('li');
-    listItem.classList.add('success');
-    listItem.textContent = `${item.name} → ${getFaceDisplayName(item.face)}に割り当てました`;
-    bulkUploadList.appendChild(listItem);
-  });
-  
-  // マッチしなかったファイルを表示
-  results.notMatched.forEach(name => {
-    const listItem = document.createElement('li');
-    listItem.classList.add('warning');
-    listItem.textContent = `${name} - ファイル名から面を判別できませんでした`;
-    bulkUploadList.appendChild(listItem);
-  });
+  // トーストで結果を表示
+  let toastMsg = '';
+  if (results.success.length) {
+    toastMsg += '割り当て成功:\n' + results.success.map(item => `${item.name} → ${getFaceDisplayName(item.face)}`).join('\n') + '\n';
+  }
+  if (results.notMatched.length) {
+    toastMsg += '未割り当て:\n' + results.notMatched.join('\n');
+  }
+  if (toastMsg) showToast(toastMsg.trim());
 }
 
 // 面の表示名を取得する関数
@@ -469,3 +463,15 @@ function animate() {
   renderer.render(scene, camera);
 }
 animate();
+
+// トーストメッセージの表示
+function showToast(message, duration = 3000) {
+  const toast = document.getElementById('toast');
+  toast.textContent = message;
+  toast.classList.add('show');
+  toast.classList.remove('hidden');
+  setTimeout(() => {
+    toast.classList.remove('show');
+    toast.classList.add('hidden');
+  }, duration);
+}
