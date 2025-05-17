@@ -256,7 +256,8 @@ function handleBulkUpload(files) {
     'top': ['top', '上面', '上', 'upper'],
     'bottom': ['bottom', '底面', '底', '下面', '下', 'under'],
     'right': ['right', '右側面', '右面', '右', 'side'],
-    'left': ['left', '左側面', '左面', '左']
+    'left': ['left', '左側面', '左面', '左'],
+    'bg': ['bg', 'background', '背景']
   };
   
   // 結果を表示するための配列
