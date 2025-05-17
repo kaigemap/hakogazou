@@ -197,13 +197,23 @@ canvas {
 }
 
 .control-group {
+  margin: 0.5rem 0;
   display: flex;
-  gap: 1rem;
-  margin-top: 1rem;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .control-group button {
   flex: 1;
+}
+
+.control-group input[type="range"] {
+  flex: 1;
+}
+
+.control-group span {
+  min-width: 3em;
+  text-align: right;
 }
 
 .preview-controls {
@@ -423,4 +433,8 @@ canvas {
 .toast.show {
   opacity: 1;
   pointer-events: auto;
+}
+
+.camera-controls {
+  margin-top: 1rem;
 }

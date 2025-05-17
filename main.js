@@ -31,16 +31,14 @@ function resizeRenderer() {
 container.addEventListener('wheel', (e) => {
   e.preventDefault();
   
-  if (document.getElementById('view').value === 'カスタム') {
-    const zoomSpeed = 0.1;
-    const direction = e.deltaY > 0 ? 1 : -1;
-    const distance = camera.position.length();
-    const newDistance = Math.max(2, Math.min(20, distance + direction * zoomSpeed));
-    
-    // カメラの方向を維持しながら距離を変更
-    camera.position.normalize().multiplyScalar(newDistance);
-    camera.lookAt(0, 0, 0);
-  }
+  const zoomSpeed = 0.1;
+  const direction = e.deltaY > 0 ? 1 : -1;
+  const distance = camera.position.length();
+  const newDistance = Math.max(2, Math.min(20, distance + direction * zoomSpeed));
+  
+  // カメラの方向を維持しながら距離を変更
+  camera.position.normalize().multiplyScalar(newDistance);
+  camera.lookAt(0, 0, 0);
 });
 
 renderer.setPixelRatio(window.devicePixelRatio);
@@ -155,20 +153,6 @@ function createBox() {
   scene.add(box);
 }
 
-// 視点の更新
-function updateView() {
-  const preset = document.getElementById('view').value;
-  if (preset === '斜め上') camera.position.set(4, 3, 4);
-  if (preset === '正面') camera.position.set(0, 2, 6);
-  if (preset === '横') camera.position.set(6, 2, 0);
-  if (preset === '上') camera.position.set(0, 6, 0);
-  if (preset === 'カスタム') {
-    // カスタム視点の設定はそのまま維持
-    return;
-  }
-  camera.lookAt(0, 0, 0);
-}
-
 // ステータスの更新
 function updateStatus() {
   const required = ['front', 'back', 'right', 'left', 'top', 'bottom'];
@@ -188,9 +172,40 @@ function updateStatus() {
   statusEl.classList.remove('hidden');
 }
 
-// イベントリスナー設定
-document.getElementById('view').addEventListener('change', updateView);
+// カメラ位置更新関数
+function updateCameraPosition() {
+  const distance = parseFloat(document.getElementById('cameraDistance').value);
+  const xAngle = parseFloat(document.getElementById('cameraX').value) * Math.PI / 180;
+  const yAngle = parseFloat(document.getElementById('cameraY').value) * Math.PI / 180;
 
+  camera.position.x = distance * Math.cos(xAngle) * Math.sin(yAngle);
+  camera.position.y = distance * Math.sin(xAngle);
+  camera.position.z = distance * Math.cos(xAngle) * Math.cos(yAngle);
+  
+  camera.lookAt(0, 0, 0);
+}
+
+// スライダーの値表示更新
+function updateSliderValue(id) {
+  const slider = document.getElementById(id);
+  const valueDisplay = document.getElementById(`${id}Value`);
+  if (slider && valueDisplay) {
+    valueDisplay.textContent = id === 'cameraDistance' ? slider.value : `${slider.value}°`;
+  }
+}
+
+// スライダーのイベントリスナー設定
+['cameraX', 'cameraY', 'cameraDistance'].forEach(id => {
+  const slider = document.getElementById(id);
+  if (slider) {
+    slider.addEventListener('input', () => {
+      updateSliderValue(id);
+      updateCameraPosition();
+    });
+  }
+});
+
+// イベントリスナーを追加（修正：ビュー選択を削除）
 document.getElementById('shadowToggle').addEventListener('change', (e) => {
   ground.visible = e.target.checked;
 });
@@ -455,7 +470,7 @@ container.addEventListener('mousemove', (e) => {
     y: e.offsetY - previousMousePosition.y
   };
 
-  if (isDragging && document.getElementById('view').value === 'カスタム') {
+  if (isDragging) {
     // 水平方向の回転
     camera.position.x = camera.position.x * Math.cos(deltaMove.x * 0.01) - camera.position.z * Math.sin(deltaMove.x * 0.01);
     camera.position.z = camera.position.z * Math.cos(deltaMove.x * 0.01) + camera.position.x * Math.sin(deltaMove.x * 0.01);
@@ -491,24 +506,25 @@ document.addEventListener('mouseup', () => {
 container.addEventListener('wheel', (e) => {
   e.preventDefault();
   
-  if (document.getElementById('view').value === 'カスタム') {
-    const zoomSpeed = 0.1;
-    const direction = e.deltaY > 0 ? 1 : -1;
-    const distance = camera.position.length();
-    const newDistance = Math.max(2, Math.min(20, distance + direction * zoomSpeed));
-    
-    // カメラの方向を維持しながら距離を変更
-    camera.position.normalize().multiplyScalar(newDistance);
-    camera.lookAt(0, 0, 0);
-  }
+  const zoomSpeed = 0.1;
+  const direction = e.deltaY > 0 ? 1 : -1;
+  const distance = camera.position.length();
+  const newDistance = Math.max(2, Math.min(20, distance + direction * zoomSpeed));
+  
+  // カメラの方向を維持しながら距離を変更
+  camera.position.normalize().multiplyScalar(newDistance);
+  camera.lookAt(0, 0, 0);
 });
 
-updateView();
 updateStatus();
 
 function animate() {
   requestAnimationFrame(animate);
-  if (box && isRotating) box.rotation.y += rotateSpeed;
+  
+  if (isRotating && box) {
+    box.rotation.y += rotateSpeed;
+  }
+  
   renderer.render(scene, camera);
 }
 animate();
@@ -545,3 +561,18 @@ function detectFaceFromFilename(filename) {
   }
   return null;
 }
+
+// カメラ位置更新関数
+function updateCameraPosition() {
+  const distance = parseFloat(document.getElementById('cameraDistance').value);
+  const xAngle = parseFloat(document.getElementById('cameraX').value) * Math.PI / 180;
+  const yAngle = parseFloat(document.getElementById('cameraY').value) * Math.PI / 180;
+
+  camera.position.x = distance * Math.cos(xAngle) * Math.sin(yAngle);
+  camera.position.y = distance * Math.sin(xAngle);
+  camera.position.z = distance * Math.cos(xAngle) * Math.cos(yAngle);
+  
+  camera.lookAt(0, 0, 0);
+}
+
+// アニメーションの終了
