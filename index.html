@@ -2,153 +2,167 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
-  <title>ボードゲーム箱ジェネレーター</title>
-  <style>
-    body { font-family: sans-serif; text-align: center; background: #f5f5f5; }
-    input, select, button { margin: 0.5em; }
-    canvas { display: block; margin: 1em auto; border: 1px solid #ccc; }
-    label { display: block; }
-  </style>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="styles.css" />
+  <title>hakogazou - ボードゲーム箱ジェネレーター</title>
 </head>
 <body>
-  <h1>ボードゲーム箱ジェネレーター</h1>
-  <div>
-    <label>正面画像: <input type="file" id="front"></label>
-    <label>裏面画像: <input type="file" id="back"></label>
-    <label>右側面画像: <input type="file" id="right"></label>
-    <label>左側面画像: <input type="file" id="left"></label>
-    <label>上面画像: <input type="file" id="top"></label>
-    <label>底面画像: <input type="file" id="bottom"></label>
-    <label>背景画像: <input type="file" id="bg"></label>
-    <label>視点: 
-      <select id="view">
-        <option value="斜め上">斜め上</option>
-        <option value="正面">正面</option>
-        <option value="横">横</option>
-      </select>
-    </label>
-    <label><input type="checkbox" id="shadowToggle" checked> 落ち影を表示</label>
-    <button id="download">画像を保存</button>
+  <header>
+    <div class="container">
+      <h1>ボードゲーム箱ジェネレーター</h1>
+    </div>
+  </header>
+
+  <div class="container">
+    <div class="grid">
+      <div class="card">
+        <h2>箱の画像をアップロード</h2>
+        
+        <!-- 一括アップロード領域 -->
+        <div class="bulk-upload-section">
+          <h3>一括アップロード</h3>
+          <p class="help-text">複数の画像を一度にドラッグ＆ドロップするか、クリックして選択してください。<br>
+          ファイル名に「front」「back」「top」「bottom」「right」「left」が含まれている画像は自動的に適切な位置に配置されます。</p>
+        
+          <div class="bulk-upload-box" id="bulk-upload-box">
+            <input type="file" id="bulk-upload" accept="image/*" multiple>
+            <div class="upload-icon" style="font-size: 2rem;">📂</div>
+            <div class="upload-text">複数の画像をここにドラッグ＆ドロップ</div>
+          </div>
+          
+          <div id="bulk-upload-result" class="bulk-upload-result hidden">
+            <h4>アップロード結果:</h4>
+            <ul id="bulk-upload-list"></ul>
+          </div>
+        </div>
+        
+        <div class="divider">または</div>
+        
+        <h3>個別にアップロード</h3>
+        <div class="upload-area">
+          <div class="upload-item">
+            <span class="upload-label">正面 
+              <div class="tooltip">?
+                <span class="tooltip-text">箱の前面の画像をアップロードしてください</span>
+              </div>
+            </span>
+            <div class="upload-box" id="front-box">
+              <input type="file" id="front" accept="image/*">
+              <div class="upload-icon">📷</div>
+              <div class="upload-text">クリックまたはドロップ</div>
+            </div>
+          </div>
+          <div class="upload-item">
+            <span class="upload-label">裏面</span>
+            <div class="upload-box" id="back-box">
+              <input type="file" id="back" accept="image/*">
+              <div class="upload-icon">📷</div>
+              <div class="upload-text">クリックまたはドロップ</div>
+            </div>
+          </div>
+          <div class="upload-item">
+            <span class="upload-label">右側面</span>
+            <div class="upload-box" id="right-box">
+              <input type="file" id="right" accept="image/*">
+              <div class="upload-icon">📷</div>
+              <div class="upload-text">クリックまたはドロップ</div>
+            </div>
+          </div>
+          <div class="upload-item">
+            <span class="upload-label">左側面</span>
+            <div class="upload-box" id="left-box">
+              <input type="file" id="left" accept="image/*">
+              <div class="upload-icon">📷</div>
+              <div class="upload-text">クリックまたはドロップ</div>
+            </div>
+          </div>
+          <div class="upload-item">
+            <span class="upload-label">上面</span>
+            <div class="upload-box" id="top-box">
+              <input type="file" id="top" accept="image/*">
+              <div class="upload-icon">📷</div>
+              <div class="upload-text">クリックまたはドロップ</div>
+            </div>
+          </div>
+          <div class="upload-item">
+            <span class="upload-label">底面</span>
+            <div class="upload-box" id="bottom-box">
+              <input type="file" id="bottom" accept="image/*">
+              <div class="upload-icon">📷</div>
+              <div class="upload-text">クリックまたはドロップ</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <h2>背景設定</h2>
+          <div class="upload-item">
+            <span class="upload-label">背景画像 (オプション)</span>
+            <div class="upload-box" id="bg-box">
+              <input type="file" id="bg" accept="image/*">
+              <div class="upload-icon">🖼️</div>
+              <div class="upload-text">背景画像をアップロード</div>
+            </div>
+          </div>
+          <button id="reset-bg" style="margin-top: 0.5rem;">背景をリセット</button>
+        </div>
+
+        <div class="settings-section">
+          <h2>表示設定</h2>
+          <label for="view" class="upload-label">視点:</label>
+          <select id="view">
+            <option value="斜め上">斜め上から</option>
+            <option value="正面">正面から</option>
+            <option value="横">横から</option>
+            <option value="上">上から</option>
+            <option value="カスタム">カスタム</option>
+          </select>
+
+          <div class="checkbox-container">
+            <input type="checkbox" id="shadowToggle" checked>
+            <label for="shadowToggle">落ち影を表示</label>
+          </div>
+
+          <div class="checkbox-container">
+            <input type="checkbox" id="rotateToggle" checked>
+            <label for="rotateToggle">自動回転</label>
+          </div>
+
+          <div class="speed-control">
+            <label for="rotateSpeed">回転速度:</label>
+            <input type="range" id="rotateSpeed" class="speed-slider" min="0.001" max="0.02" step="0.001" value="0.005">
+          </div>
+        </div>
+
+        <div id="status" class="status hidden"></div>
+      </div>
+
+      <div class="card">
+        <h2>3Dプレビュー</h2>
+        <div id="canvas-container" class="canvas-container"></div>
+        
+        <div class="control-group">
+          <button id="download">
+            <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+              <path fill="none" d="M0 0h24v24H0z"/>
+              <path d="M4 19h16v-7h2v8a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1v-8h2v7zm9-10v7h-2V9H6l6-6 6 6h-5z" fill="currentColor"/>
+            </svg>
+            画像を保存
+          </button>
+          <button id="reset">
+            <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+              <path fill="none" d="M0 0h24v24H0z"/>
+              <path d="M12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10-4.477 10-10 10zm0-2a8 8 0 1 0 0-16 8 8 0 0 0 0 16zm0-9h-3v2h3v3h2v-3h3v-2h-3V8h-2v3z" fill="currentColor"/>
+            </svg>
+            リセット
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
-  <div id="canvas-container"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/three@0.159.0/build/three.min.js"></script>
-  <script>
-    const container = document.getElementById('canvas-container');
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 1000);
-    const renderer = new THREE.WebGLRenderer({ preserveDrawingBuffer: true, antialias: true });
-    const renderSize = 1000;
-    renderer.setSize(renderSize, renderSize);
-    renderer.setPixelRatio(window.devicePixelRatio);
-    renderer.shadowMap.enabled = true;
-    container.appendChild(renderer.domElement);
-
-    const ambientLight = new THREE.AmbientLight(0xaaaaaa, 1.2);
-    scene.add(ambientLight);
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
-    directionalLight.position.set(5, 10, 5);
-    directionalLight.castShadow = true;
-    directionalLight.shadow.mapSize.width = 1024;
-    directionalLight.shadow.mapSize.height = 1024;
-    directionalLight.shadow.camera.near = 0.5;
-    directionalLight.shadow.camera.far = 50;
-    scene.add(directionalLight);
-
-    const groundGeometry = new THREE.PlaneGeometry(100, 100);
-    const groundMaterial = new THREE.ShadowMaterial({ opacity: 0.3 });
-    const ground = new THREE.Mesh(groundGeometry, groundMaterial);
-    ground.rotation.x = -Math.PI / 2;
-    ground.position.y = -0.75;
-    ground.receiveShadow = true;
-    scene.add(ground);
-
-    const loader = new THREE.TextureLoader();
-    let box;
-    const textures = {};
-
-    function createBox() {
-      const required = ['front', 'back', 'right', 'left', 'top', 'bottom'];
-      if (!required.every(k => textures[k])) return;
-
-      if (box) scene.remove(box);
-
-      const frontImage = textures.front.image;
-      const rightImage = textures.right.image;
-
-      const baseHeight = 1.5;
-      const width = (frontImage.width / frontImage.height) * baseHeight;
-      const height = baseHeight;
-      const depth = (rightImage.width / rightImage.height) * baseHeight;
-
-      const chamfer = 0.02;
-      const geometry = new THREE.BoxGeometry(width - chamfer, height - chamfer, depth - chamfer);
-      const materials = [
-        new THREE.MeshLambertMaterial({ map: textures.right }),
-        new THREE.MeshLambertMaterial({ map: textures.left }),
-        new THREE.MeshLambertMaterial({ map: textures.top }),
-        new THREE.MeshLambertMaterial({ map: textures.bottom }),
-        new THREE.MeshLambertMaterial({ map: textures.front }),
-        new THREE.MeshLambertMaterial({ map: textures.back })
-      ];
-      box = new THREE.Mesh(geometry, materials);
-      box.castShadow = true;
-      box.receiveShadow = false;
-      scene.add(box);
-    }
-
-    function updateView() {
-      const preset = document.getElementById('view').value;
-      if (preset === '斜め上') camera.position.set(4, 3, 4);
-      if (preset === '正面') camera.position.set(0, 2, 6);
-      if (preset === '横') camera.position.set(6, 2, 0);
-      camera.lookAt(0, 0, 0);
-    }
-    document.getElementById('view').addEventListener('change', updateView);
-
-    document.getElementById('shadowToggle').addEventListener('change', (e) => {
-      ground.visible = e.target.checked;
-    });
-
-    function handleUpload(id, key) {
-      document.getElementById(id).addEventListener('change', (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-        const url = URL.createObjectURL(file);
-        loader.load(url, (tex) => {
-          tex.anisotropy = renderer.capabilities.getMaxAnisotropy();
-          textures[key] = tex;
-          createBox();
-        });
-      });
-    }
-
-    ['front', 'back', 'right', 'left', 'top', 'bottom'].forEach(id => handleUpload(id, id));
-
-    document.getElementById('bg').addEventListener('change', (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-      const url = URL.createObjectURL(file);
-      loader.load(url, (tex) => {
-        scene.background = tex;
-      });
-    });
-
-    document.getElementById('download').addEventListener('click', () => {
-      const a = document.createElement('a');
-      a.download = 'box.png';
-      a.href = renderer.domElement.toDataURL('image/png');
-      a.click();
-    });
-
-    updateView();
-
-    function animate() {
-      requestAnimationFrame(animate);
-      if (box) box.rotation.y += 0.005;
-      renderer.render(scene, camera);
-    }
-    animate();
-  </script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.159.0/examples/js/loaders/GLTFLoader.js"></script>
+  <script src="main.js"></script>
 </body>
 </html>
