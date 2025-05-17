@@ -1,33 +1,73 @@
-// 初期設定
+// three.jsの初期化部分
 const container = document.getElementById('canvas-container');
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 1000);
-const renderer = new THREE.WebGLRenderer({ preserveDrawingBuffer: true, antialias: true });
-const renderSize = Math.min(container.clientWidth, container.clientHeight);
-renderer.setSize(renderSize, renderSize);
+
+// カメラの初期位置を設定（追加）
+camera.position.set(4, 3, 4);
+camera.lookAt(0, 0, 0);
+
+const renderer = new THREE.WebGLRenderer({ 
+  preserveDrawingBuffer: true, 
+  antialias: true 
+});
+
+// サイズ設定を関数化（修正）
+function resizeRenderer() {
+  const container = document.getElementById('canvas-container');
+  const width = container.clientWidth;
+  const height = container.clientHeight;
+  const size = Math.min(width, height);
+  renderer.setSize(size, size, false);
+  camera.aspect = 1;
+  camera.updateProjectionMatrix();
+}
+
+// ズーム処理の修正（余分なライト追加を削除）
+container.addEventListener('wheel', (e) => {
+  e.preventDefault();
+  
+  if (document.getElementById('view').value === 'カスタム') {
+    const zoomSpeed = 0.1;
+    const direction = e.deltaY > 0 ? 1 : -1;
+    const distance = camera.position.length();
+    const newDistance = Math.max(2, Math.min(20, distance + direction * zoomSpeed));
+    
+    // カメラの方向を維持しながら距離を変更
+    camera.position.normalize().multiplyScalar(newDistance);
+    camera.lookAt(0, 0, 0);
+  }
+});
+
 renderer.setPixelRatio(window.devicePixelRatio);
 renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = THREE.PCFSoftShadowMap; // ←追加
-renderer.toneMapping = THREE.ACESFilmicToneMapping; // ←追加
-renderer.outputEncoding = THREE.sRGBEncoding; // ←追加
-container.appendChild(renderer.domElement);
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.5;
+renderer.outputColorSpace = THREE.SRGBColorSpace;
 
+container.appendChild(renderer.domElement);
+resizeRenderer(); // 初期サイズを設定
+
+// リサイズイベントリスナー
+window.addEventListener('resize', resizeRenderer);
 
 // ライト設定
-const ambientLight = new THREE.AmbientLight(0xaaaaaa, 1.2);
+const ambientLight = new THREE.AmbientLight(0xaaaaaa, 1.5); // 強さを上げる
 scene.add(ambientLight);
 
-const directionalLight = new THREE.DirectionalLight(0xffffff, 2);
+const directionalLight = new THREE.DirectionalLight(0xffffff, 2.5); // 強さを上げる
 directionalLight.position.set(5, 10, 5);
 directionalLight.castShadow = true;
 directionalLight.shadow.mapSize.width = 1024;
 directionalLight.shadow.mapSize.height = 1024;
 directionalLight.shadow.camera.near = 0.5;
 directionalLight.shadow.camera.far = 50;
-const pointLight = new THREE.PointLight(0xffffff, 0.5);
+scene.add(directionalLight);
+
+const pointLight = new THREE.PointLight(0xffffff, 0.8); // 強さを調整
 pointLight.position.set(-3, 3, -3);
 scene.add(pointLight);
-scene.add(directionalLight);
 
 // 床の設定
 const groundGeometry = new THREE.PlaneGeometry(100, 100);
@@ -165,24 +205,41 @@ document.getElementById('rotateSpeed').addEventListener('input', (e) => {
 });
 
 // 背景画像の設定
-createImagePreview(document.getElementById('bg'), 'bg-box');
 document.getElementById('bg').addEventListener('change', (e) => {
   const file = e.target.files[0];
   if (!file) return;
   const url = URL.createObjectURL(file);
+  
   loader.load(url, (tex) => {
+    // テクスチャの設定
+    tex.colorSpace = THREE.SRGBColorSpace;
+    
+    // 既存の背景テクスチャを保存（リセット用）
+    if (textures['bg']) {
+      textures['bg'].texture.dispose();
+    }
+    
+    // 背景を直接設定
     scene.background = tex;
+    textures['bg'] = { texture: tex };
   });
 });
 
 // 背景リセット
 document.getElementById('reset-bg').addEventListener('click', () => {
+  // 背景をクリア
+  if (textures['bg']) {
+    textures['bg'].texture.dispose();
+    delete textures['bg'];
+  }
   scene.background = null;
+  
+  // UIのリセット
   const bgBox = document.getElementById('bg-box');
   const existingImg = bgBox.querySelector('img');
   if (existingImg) bgBox.removeChild(existingImg);
-  document.getElementById('bg-box').querySelector('.upload-icon').style.display = '';
-  document.getElementById('bg-box').querySelector('.upload-text').style.display = '';
+  bgBox.querySelector('.upload-icon').style.display = '';
+  bgBox.querySelector('.upload-text').style.display = '';
 });
 
 // 画像保存
@@ -213,29 +270,13 @@ document.getElementById('reset').addEventListener('click', () => {
   });
   
   // 入力フィールドをリセット
-  document.getElementById('front').value = '';
-  document.getElementById('back').value = '';
-  document.getElementById('right').value = '';
-  document.getElementById('left').value = '';
-  document.getElementById('top').value = '';
-  document.getElementById('bottom').value = '';
-  document.getElementById('bg').value = '';
-  document.getElementById('bulk-upload').value = '';
-
-  // 一括アップロード結果をクリア
-  bulkUploadList.innerHTML = '';
-  bulkUploadResult.classList.add('hidden');
+  ['front', 'back', 'right', 'left', 'top', 'bottom', 'bg', 'bulk-upload'].forEach(id => {
+    const input = document.getElementById(id);
+    if (input) input.value = '';
+  });
 
   // ステータスをクリア
   document.getElementById('status').className = 'status hidden';
-});
-
-// ウィンドウリサイズ対応
-window.addEventListener('resize', () => {
-  const newSize = Math.min(container.clientWidth, container.clientHeight);
-  renderer.setSize(newSize, newSize);
-  camera.aspect = 1;
-  camera.updateProjectionMatrix();
 });
 
 // 一括アップロード機能
@@ -247,45 +288,16 @@ const bulkUploadList = document.getElementById('bulk-upload-list');
 function handleBulkUpload(files) {
   if (!files || files.length === 0) return;
   
-  bulkUploadList.innerHTML = '';
-  bulkUploadResult.classList.remove('hidden');
-  
-  const faceKeywords = {
-    'front': ['front', '正面', 'face', 'main'],
-    'back': ['back', '裏面', '裏', 'rear'],
-    'top': ['top', '上面', '上', 'upper'],
-    'bottom': ['bottom', '底面', '底', '下面', '下', 'under'],
-    'right': ['right', '右側面', '右面', '右', 'side'],
-    'left': ['left', '左側面', '左面', '左'],
-    'bg': ['bg', 'background', '背景']
-  };
-  
-  // 結果を表示するための配列
+  // トーストで結果を表示するための配列
   const results = {
     success: [],
     notMatched: []
   };
   
-  // ファイル名から面を判定する関数
-  function detectFaceFromFilename(filename) {
-    filename = filename.toLowerCase();
-    
-    for (const [face, keywords] of Object.entries(faceKeywords)) {
-      if (keywords.some(keyword => filename.includes(keyword))) {
-        return face;
-      }
-    }
-    
-    return null;
-  }
-  
   // 各ファイルを処理
   Array.from(files).forEach(file => {
     if (!file.type.startsWith('image/')) {
-      const listItem = document.createElement('li');
-      listItem.classList.add('error');
-      listItem.textContent = `${file.name} - 画像ファイルではありません`;
-      bulkUploadList.appendChild(listItem);
+      showToast(`${file.name} - 画像ファイルではありません`, 3000);
       return;
     }
     
@@ -443,8 +455,6 @@ container.addEventListener('wheel', (e) => {
   if (document.getElementById('view').value === 'カスタム') {
     const zoomSpeed = 0.1;
     const direction = e.deltaY > 0 ? 1 : -1;
-    
-    // カメラの距離を調整
     const distance = camera.position.length();
     const newDistance = Math.max(2, Math.min(20, distance + direction * zoomSpeed));
     
@@ -474,4 +484,25 @@ function showToast(message, duration = 3000) {
     toast.classList.remove('show');
     toast.classList.add('hidden');
   }, duration);
+}
+
+// ファイル名から面を判別する関数を追加
+function detectFaceFromFilename(filename) {
+  filename = filename.toLowerCase();
+  const faces = {
+    'front': ['front', 'mae', '前', '正面'],
+    'back': ['back', 'ushiro', '後', '裏', '裏面'],
+    'right': ['right', 'migi', '右'],
+    'left': ['left', 'hidari', '左'],
+    'top': ['top', 'ue', '上'],
+    'bottom': ['bottom', 'shita', '下'],
+    'bg': ['bg', 'background', 'haikei', '背景'] // 背景用のキーワードを追加
+  };
+
+  for (const [face, keywords] of Object.entries(faces)) {
+    if (keywords.some(keyword => filename.includes(keyword))) {
+      return face;
+    }
+  }
+  return null;
 }
