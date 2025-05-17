@@ -9,8 +9,12 @@ camera.lookAt(0, 0, 0);
 
 const renderer = new THREE.WebGLRenderer({ 
   preserveDrawingBuffer: true, 
-  antialias: true 
+  antialias: true,
+  alpha: true  // 追加：背景の透過を有効化
 });
+
+// 初期背景を透明に
+scene.background = null;
 
 // サイズ設定を関数化（修正）
 function resizeRenderer() {
@@ -199,23 +203,23 @@ document.getElementById('rotateSpeed').addEventListener('input', (e) => {
   rotateSpeed = parseFloat(e.target.value);
 });
 
-// 画像アップロードのハンドラー設定
-['front', 'back', 'right', 'left', 'top', 'bottom'].forEach(id => {
+// 画像アップロードのハンドラー設定を修正
+['front', 'back', 'right', 'left', 'top', 'bottom', 'bg'].forEach(id => { // bgを追加
   createImagePreview(document.getElementById(id), `${id}-box`);
 });
 
-// 背景画像の設定
+// 背景画像の設定を修正（古い処理を削除）
 document.getElementById('bg').addEventListener('change', (e) => {
   const file = e.target.files[0];
   if (!file) return;
-  const url = URL.createObjectURL(file);
   
+  const url = URL.createObjectURL(file);
   loader.load(url, (tex) => {
     // テクスチャの設定
     tex.colorSpace = THREE.SRGBColorSpace;
     
     // 既存の背景テクスチャを保存（リセット用）
-    if (textures['bg']) {
+    if (textures['bg'] && textures['bg'].texture) {
       textures['bg'].texture.dispose();
     }
     
@@ -229,7 +233,9 @@ document.getElementById('bg').addEventListener('change', (e) => {
 document.getElementById('reset-bg').addEventListener('click', () => {
   // 背景をクリア
   if (textures['bg']) {
-    textures['bg'].texture.dispose();
+    if (textures['bg'].texture) {
+      textures['bg'].texture.dispose();
+    }
     delete textures['bg'];
   }
   scene.background = null;
@@ -237,17 +243,50 @@ document.getElementById('reset-bg').addEventListener('click', () => {
   // UIのリセット
   const bgBox = document.getElementById('bg-box');
   const existingImg = bgBox.querySelector('img');
-  if (existingImg) bgBox.removeChild(existingImg);
-  bgBox.querySelector('.upload-icon').style.display = '';
-  bgBox.querySelector('.upload-text').style.display = '';
+  if (existingImg) {
+    bgBox.removeChild(existingImg);
+  }
+  
+  // 入力フィールドをリセット
+  const bgInput = document.getElementById('bg');
+  if (bgInput) {
+    bgInput.value = '';
+  }
+
+  // アイコンと説明テキストを表示
+  const icon = bgBox.querySelector('.upload-icon');
+  const text = bgBox.querySelector('.upload-text');
+  if (icon) icon.style.display = '';
+  if (text) text.style.display = '';
 });
 
-// 画像保存
+// 画像保存を高解像度に修正
 document.getElementById('download').addEventListener('click', () => {
+  // 現在のサイズを保存
+  const originalSize = {
+    width: renderer.domElement.width,
+    height: renderer.domElement.height
+  };
+  
+  // 一時的に高解像度にする（2048x2048）
+  const exportSize = 2048;
+  renderer.setSize(exportSize, exportSize, false);
+  camera.aspect = 1;
+  camera.updateProjectionMatrix();
+  
+  // 高解像度でレンダリング
+  renderer.render(scene, camera);
+  
+  // 画像として保存
   const a = document.createElement('a');
   a.download = 'boardgame-box.png';
-  a.href = renderer.domElement.toDataURL('image/png');
+  a.href = renderer.domElement.toDataURL('image/png', 1.0);
   a.click();
+  
+  // 元のサイズに戻す
+  renderer.setSize(originalSize.width, originalSize.height, false);
+  camera.aspect = 1;
+  camera.updateProjectionMatrix();
 });
 
 // すべてリセット
