@@ -518,7 +518,8 @@ document.addEventListener('DOMContentLoaded', () => {
   resizeRenderer();
   window.addEventListener('resize', resizeRenderer);
   
-  ['front', 'back', 'right', 'left', 'top', 'bottom'].forEach(id => {
+  // 箱の面と背景画像のプレビューを設定
+  ['front', 'back', 'right', 'left', 'top', 'bottom', 'bg'].forEach(id => {
     createImagePreview(document.getElementById(id), `${id}-box`);
   });
 
@@ -706,23 +707,6 @@ function animate() {
   
   renderer.render(scene, camera);
 }
-
-// 背景画像の設定
-document.getElementById('bg').addEventListener('change', (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
-  const url = URL.createObjectURL(file);
-  loader.load(url, (tex) => {
-    tex.colorSpace = THREE.SRGBColorSpace;
-    if (textures['bg'] && textures['bg'].texture) {
-      textures['bg'].texture.dispose();
-    }
-    scene.background = tex;
-    textures['bg'] = { texture: tex };
-    // 背景画像がある場合は不透明で描画
-    renderer.setClearColor(0x000000, 1);
-  });
-});
 
 document.getElementById('reset-bg').addEventListener('click', () => {
   if (textures['bg']) {
