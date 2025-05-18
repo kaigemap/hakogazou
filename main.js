@@ -26,14 +26,14 @@ scene.background = null;
 renderer.setPixelRatio(window.devicePixelRatio);
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap; // 影を柔らかくする
 renderer.setClearColor(0x000000, 0);
 document.body.appendChild(renderer.domElement);
 
 // 床の設定
 const groundGeometry = new THREE.PlaneGeometry(30, 30);
 const groundMaterial = new THREE.ShadowMaterial({ 
-  opacity: 0.3,  // 影の濃さを調整
+  opacity: 0.5,  // 影の濃さを調整
   transparent: true,
   depthWrite: false,
 });
@@ -44,12 +44,12 @@ ground.receiveShadow = true;
 scene.add(ground);
 
 // ライト設定
-const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+const ambientLight = new THREE.AmbientLight(0xffffff, 1.1);
 scene.add(ambientLight);
 
 // メインライト
-const directionalLight = new THREE.DirectionalLight(0xffffff, 0.7);
-directionalLight.position.set(1.5, 2, 1);
+const directionalLight = new THREE.DirectionalLight(0xffffff, 0.3);
+directionalLight.position.set(0, 2, 0);
 directionalLight.castShadow = true;
 directionalLight.shadow.mapSize.width = 8192;  // 超高解像度のシャドウマップ
 directionalLight.shadow.mapSize.height = 8192;
@@ -59,10 +59,16 @@ directionalLight.shadow.camera.left = -5;
 directionalLight.shadow.camera.right = 5;
 directionalLight.shadow.camera.top = 5;
 directionalLight.shadow.camera.bottom = -5;
-directionalLight.shadow.radius = 3;     // よりソフトな影
+directionalLight.shadow.radius = 8;     // よりソフトな影
 directionalLight.shadow.bias = -0.00002; // シャドウアクネ防止
 directionalLight.shadow.normalBias = 0.01; // セルフシャドウイングの改善
 scene.add(directionalLight);
+
+// ポイントライト（補助用）
+const pointLight = new THREE.PointLight(0xffffff, 0.2);
+pointLight.position.set(-2, 4, -2);
+pointLight.castShadow = false;
+scene.add(pointLight);
 
 // 補助ライト
 const fillLight = new THREE.DirectionalLight(0xffffff, 0.3);
@@ -79,15 +85,15 @@ scene.add(bounceLight);
 
 // スポットライトの設定
 const spotLight1 = new THREE.SpotLight(0xffffff, 0.3);
-spotLight1.position.set(2, 3, 2);
-spotLight1.angle = Math.PI / 6;
-spotLight1.penumbra = 0.9;
-spotLight1.decay = 1.5;
-spotLight1.distance = 8;
+spotLight1.position.set(2, 2, 2); // 高さを3から2に下げる
+spotLight1.angle = Math.PI / 8; // 角度を狭める（PI/6からPI/8に）
+spotLight1.penumbra = 0.7; // ペナンブラを0.9から0.7に調整
+spotLight1.decay = 2; // 減衰を1.5から2に強める
+spotLight1.distance = 5; // 距離を8から5に短縮
 spotLight1.castShadow = true;
 spotLight1.shadow.mapSize.width = 4096;
 spotLight1.shadow.mapSize.height = 4096;
-spotLight1.shadow.radius = 5;
+spotLight1.shadow.radius = 8; // 影のブラーを5から3に調整
 spotLight1.shadow.bias = -0.00005;
 scene.add(spotLight1);
 
@@ -100,7 +106,7 @@ spotLight2.distance = 10;
 spotLight2.castShadow = true;
 spotLight2.shadow.mapSize.width = 4096;
 spotLight2.shadow.mapSize.height = 4096;
-spotLight2.shadow.radius = 5;
+spotLight2.shadow.radius = 8;
 spotLight2.shadow.bias = -0.00005;
 scene.add(spotLight2);
 
