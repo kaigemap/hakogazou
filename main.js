@@ -12,6 +12,8 @@ let layFace = 'front';
 const container = document.getElementById('canvas-container');
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(35, 1, 0.1, 100); // より狭い画角で望遠効果を出す
+camera.position.set(0, 0.35, 4); // 箱の高さの半分を基準に設定（baseHeight = 0.7の半分）
+camera.lookAt(0, 0.35, 0);
 const renderer = new THREE.WebGLRenderer({
   antialias: true,
   alpha: true,
@@ -112,22 +114,24 @@ function resetCamera() {
   isRotating = false;
   document.getElementById('rotateToggle').checked = false;
 
+  let targetDistance;
   if (boxOrientation === 'lay') {
     // 真上からの視点
     document.getElementById('cameraX').value = '90';
     document.getElementById('cameraY').value = '0';
-    document.getElementById('cameraDistance').value = '3.5';
+    targetDistance = 3.5;
   } else {
-    // 真横からの視点
+    // 正面からの視点
     document.getElementById('cameraX').value = '0';
     document.getElementById('cameraY').value = '0';
-    document.getElementById('cameraDistance').value = '5';
+    targetDistance = 2.2;
+  }
+  document.getElementById('cameraDistance').value = targetDistance;
 
-    // 箱を正面に向ける
-    if (box) {
-      const targetRotation = Math.round(box.rotation.y / (Math.PI * 2)) * (Math.PI * 2);
-      box.rotation.y = targetRotation;
-    }
+  // 箱を正面に向ける
+  if (box) {
+    const targetRotation = Math.round(box.rotation.y / (Math.PI * 2)) * (Math.PI * 2);
+    box.rotation.y = targetRotation;
   }
   
   ['cameraX', 'cameraY', 'cameraDistance'].forEach(updateSliderValue);
@@ -324,17 +328,26 @@ function updateCameraFromUI() {
   const yAngle = parseFloat(document.getElementById('cameraY').value) * Math.PI / 180;
   const distance = parseFloat(document.getElementById('cameraDistance').value);
   
-  // 箱が寝ているときは、箱の高さの半分の位置を注視点にする
-  let targetY = 0;
-  if (box && boxOrientation === 'lay') {
-    const depth = box.geometry.parameters.depth;
-    targetY = ground.position.y + (depth / 2);
+  // 箱の中心位置を注視点にする
+  let targetY = ground.position.y + 0.35; // デフォルトは箱の標準高さ（0.7）の半分
+  if (box) {
+    if (boxOrientation === 'lay') {
+      const depth = box.geometry.parameters.depth;
+      targetY = ground.position.y + (depth / 2);
+    } else {
+      const height = box.geometry.parameters.height;
+      targetY = ground.position.y + (height / 2);
+    }
   }
   
+  // カメラ位置の計算
   camera.position.x = distance * Math.cos(xAngle) * Math.sin(yAngle);
-  camera.position.y = distance * Math.sin(xAngle) + targetY;
+  camera.position.y = distance * Math.sin(xAngle) + targetY;  // targetYを基準に高さを調整
   camera.position.z = distance * Math.cos(xAngle) * Math.cos(yAngle);
-  camera.lookAt(0, targetY, 0);
+  
+  // 注視点を箱の中心に設定
+  const lookAtTarget = new THREE.Vector3(0, targetY, 0);
+  camera.lookAt(lookAtTarget);
 }
 
 // スライダーの値表示を更新
@@ -517,6 +530,17 @@ document.addEventListener('DOMContentLoaded', () => {
   container.appendChild(renderer.domElement);
   resizeRenderer();
   window.addEventListener('resize', resizeRenderer);
+
+  // カメラの初期値を設定
+  document.getElementById('cameraX').value = '0';
+  document.getElementById('cameraY').value = '0';
+  document.getElementById('cameraDistance').value = '2.2';
+  
+  // UIの更新とイベントリスナーの設定
+  ['cameraX', 'cameraY', 'cameraDistance'].forEach(updateSliderValue);
+  
+  // カメラの位置を更新
+  updateCameraFromUI();
   
   // 箱の面と背景画像のプレビューを設定
   ['front', 'back', 'right', 'left', 'top', 'bottom', 'bg'].forEach(id => {
@@ -529,9 +553,14 @@ document.addEventListener('DOMContentLoaded', () => {
     texture.colorSpace = THREE.SRGBColorSpace;
     scene.environment = texture;
   });
+  
   // 背景画像が未設定なら完全な透明
   renderer.setClearColor(0x000000, 0);
+  
+  // UIの初期化とイベントリスナーの設定
   initializeUI();
+  
+  // アニメーション開始
   animate();
 });
 
@@ -696,6 +725,28 @@ bulkUploadBox.addEventListener('drop', (e) => {
 bulkUploadInput.addEventListener('change', (e) => {
   handleBulkUpload(e.target.files);
 });
+
+// カメラの初期位置を箱の中心に合わせるように調整
+function initCamera() {
+  camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+  
+  // 箱の中心位置を計算
+  let targetY = box ? ground.position.y + (box.geometry.parameters.height / 2) : 0.35;
+  
+  // UIの現在の値を取得
+  const currentX = parseFloat(document.getElementById('cameraX').value) || 0;
+  const currentY = parseFloat(document.getElementById('cameraY').value) || 0;
+  const currentDistance = parseFloat(document.getElementById('cameraDistance').value) || 2.2;
+  
+  // 球面座標でカメラ位置を設定
+  const xRad = currentX * Math.PI / 180;
+  const yRad = currentY * Math.PI / 180;
+  
+  camera.position.x = currentDistance * Math.cos(xRad) * Math.sin(yRad);
+  camera.position.y = currentDistance * Math.sin(xRad) + targetY;
+  camera.position.z = currentDistance * Math.cos(xRad) * Math.cos(yRad);
+  camera.lookAt(0, targetY, 0);
+}
 
 // アニメーションループ
 function animate() {
