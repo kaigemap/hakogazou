@@ -313,7 +313,7 @@ function handleWheel(e) {
   const slider = document.getElementById('cameraDistance');
   const currentValue = parseFloat(slider.value);
   const delta = e.deltaY > 0 ? 0.5 : -0.5;
-  slider.value = Math.max(2, Math.min(10, currentValue + delta));
+  slider.value = Math.max(1.2, Math.min(10, currentValue + delta));
   updateSliderValue('cameraDistance');
   updateCameraFromUI();
 }
