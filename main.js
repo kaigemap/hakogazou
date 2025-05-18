@@ -11,73 +11,96 @@ let layFace = 'front';
 // three.jsの初期化
 const container = document.getElementById('canvas-container');
 const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 1000);
-const renderer = new THREE.WebGLRenderer({ 
-  preserveDrawingBuffer: true, 
+const camera = new THREE.PerspectiveCamera(35, 1, 0.1, 100); // より狭い画角で望遠効果を出す
+const renderer = new THREE.WebGLRenderer({
   antialias: true,
-  alpha: true
+  alpha: true,
+  preserveDrawingBuffer: true,
+  premultipliedAlpha: false
 });
 
 // 初期設定
 scene.background = null;
 renderer.setPixelRatio(window.devicePixelRatio);
+renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.5;
-renderer.outputColorSpace = THREE.SRGBColorSpace;
-
-// サイズ設定
-function resizeRenderer() {
-  const width = container.clientWidth;
-  const height = container.clientHeight;
-  const size = Math.min(width, height);
-  renderer.setSize(size, size, false);
-  camera.aspect = 1;
-  camera.updateProjectionMatrix();
-}
+renderer.setClearColor(0x000000, 0);
+document.body.appendChild(renderer.domElement);
 
 // 床の設定
-const groundGeometry = new THREE.PlaneGeometry(100, 100);
+const groundGeometry = new THREE.PlaneGeometry(30, 30);
 const groundMaterial = new THREE.ShadowMaterial({ 
-  opacity: 0.4,  // 影の濃さを少し薄く
+  opacity: 0.3,  // 影の濃さを調整
   transparent: true,
-  depthWrite: false,  // 深度バッファへの書き込みを無効化
+  depthWrite: false,
 });
 const ground = new THREE.Mesh(groundGeometry, groundMaterial);
 ground.rotation.x = -Math.PI / 2;
-ground.position.y = -0.75;
+ground.position.y = -0.001;
 ground.receiveShadow = true;
 scene.add(ground);
 
 // ライト設定
-const ambientLight = new THREE.AmbientLight(0xffffff, 0.9);
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
 scene.add(ambientLight);
 
-const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-directionalLight.position.set(5, 10, 3);
-directionalLight.intensity = 0.7;
+// メインライト
+const directionalLight = new THREE.DirectionalLight(0xffffff, 0.7);
+directionalLight.position.set(1.5, 2, 1);
 directionalLight.castShadow = true;
-directionalLight.shadow.mapSize.width = 2048;
-directionalLight.shadow.mapSize.height = 2048;
+directionalLight.shadow.mapSize.width = 8192;  // 超高解像度のシャドウマップ
+directionalLight.shadow.mapSize.height = 8192;
 directionalLight.shadow.camera.near = 0.1;
-directionalLight.shadow.camera.far = 50;
+directionalLight.shadow.camera.far = 20;
 directionalLight.shadow.camera.left = -5;
 directionalLight.shadow.camera.right = 5;
 directionalLight.shadow.camera.top = 5;
 directionalLight.shadow.camera.bottom = -5;
-directionalLight.shadow.radius = 8; // ぼかしの半径を大きく
-directionalLight.shadow.bias = -0.00005; // バイアスを調整して影のアーティファクトを軽減
-directionalLight.shadow.normalBias = 0.002; // 法線バイアスを増やしてセルフシャドウイングを改善
+directionalLight.shadow.radius = 3;     // よりソフトな影
+directionalLight.shadow.bias = -0.00002; // シャドウアクネ防止
+directionalLight.shadow.normalBias = 0.01; // セルフシャドウイングの改善
 scene.add(directionalLight);
 
-const pointLight = new THREE.PointLight(0xffffff, 0.8);
-pointLight.position.set(-3, 3, -3);
-scene.add(pointLight);
-
-const fillLight = new THREE.DirectionalLight(0xffffff, 0.4);
-fillLight.position.set(-3, 5, -5);
+// 補助ライト
+const fillLight = new THREE.DirectionalLight(0xffffff, 0.3);
+fillLight.position.set(-1.5, 1, -1);
 scene.add(fillLight);
+
+// バウンスライト（床からの反射光）
+const bounceLight = new THREE.HemisphereLight(
+  0xffffff, // 上からの色
+  0xffffff, // 下からの色
+  0.3       // 強度
+);
+scene.add(bounceLight);
+
+// スポットライトの設定
+const spotLight1 = new THREE.SpotLight(0xffffff, 0.3);
+spotLight1.position.set(2, 3, 2);
+spotLight1.angle = Math.PI / 6;
+spotLight1.penumbra = 0.9;
+spotLight1.decay = 1.5;
+spotLight1.distance = 8;
+spotLight1.castShadow = true;
+spotLight1.shadow.mapSize.width = 4096;
+spotLight1.shadow.mapSize.height = 4096;
+spotLight1.shadow.radius = 5;
+spotLight1.shadow.bias = -0.00005;
+scene.add(spotLight1);
+
+const spotLight2 = new THREE.SpotLight(0xffffff, 0.2);
+spotLight2.position.set(-3, 4, -2);
+spotLight2.angle = Math.PI / 5;
+spotLight2.penumbra = 0.8;
+spotLight2.decay = 1.5;
+spotLight2.distance = 10;
+spotLight2.castShadow = true;
+spotLight2.shadow.mapSize.width = 4096;
+spotLight2.shadow.mapSize.height = 4096;
+spotLight2.shadow.radius = 5;
+spotLight2.shadow.bias = -0.00005;
+scene.add(spotLight2);
 
 // テクスチャローダー
 const loader = new THREE.TextureLoader();
@@ -142,10 +165,16 @@ function resetBoxRotationAndPosition() {
       box.position.y = ground.position.y + (depth / 2) + 0.001;
 
       // 寝かせた時のライト位置
-      directionalLight.position.set(0, 30, -15); // 斜め上からの光
+      directionalLight.position.set(0, 30, -15);
       directionalLight.intensity = 0.6;
       pointLight.position.set(-2, 4, -2);
       fillLight.position.set(2, 4, 2);
+      
+      // スポットライトの位置調整（寝かせた時）
+      spotLight1.position.set(4, 6, 4);
+      spotLight1.intensity = 0.3;
+      spotLight2.position.set(-4, 5, -3);
+      spotLight2.intensity = 0.2;
   } else {
     box.rotation.set(0, 0, 0);
     box.position.y = ground.position.y + (height / 2) + 0.001;
@@ -155,6 +184,12 @@ function resetBoxRotationAndPosition() {
     directionalLight.intensity = 1.4;
     pointLight.position.set(-3, 3, -3);
     fillLight.position.set(-3, 5, -5);
+    
+    // スポットライトの位置調整（立てた時）
+    spotLight1.position.set(3, 4, 3);
+    spotLight1.intensity = 0.4;
+    spotLight2.position.set(-4, 3, -2);
+    spotLight2.intensity = 0.3;
   }
 }
 
@@ -321,29 +356,98 @@ function createBox() {
   const frontImage = textures.front.image;
   const rightImage = textures.right.image;
 
-  const baseHeight = 1.5;
+  const baseHeight = 0.7; // 14cmを基準
   const width = (frontImage.width / frontImage.height) * baseHeight;
   const height = baseHeight;
   const depth = (rightImage.width / rightImage.height) * baseHeight;
 
-  const chamfer = 0.08;
-  const geometry = new THREE.BoxGeometry(width - chamfer, height - chamfer, depth - chamfer);
+  // 面取りのパラメータ調整
+  const bevelSize = 0.01; // 2mm相当の面取り
+  const segments = 128; // さらに細かい分割でスムーズな曲面を実現
+  
+  // ボックスジオメトリ
+  const geometry = new THREE.BoxGeometry(
+    width,
+    height,
+    depth,
+    segments,
+    segments,
+    segments
+  );
+
+  // 頂点位置の取得と加工
+  const positions = geometry.attributes.position.array;
+  
+  // 各頂点に対して面取りを適用
+  for (let i = 0; i < positions.length; i += 3) {
+    const x = positions[i];
+    const y = positions[i + 1];
+    const z = positions[i + 2];
+    
+    // エッジからの距離を計算
+    const edgeDistX = Math.abs(Math.abs(x) - width/2);
+    const edgeDistY = Math.abs(Math.abs(y) - height/2);
+    const edgeDistZ = Math.abs(Math.abs(z) - depth/2);
+    
+    // エッジ検出の閾値を調整
+    const minDist = Math.min(edgeDistX, edgeDistY, edgeDistZ);
+    
+    if (minDist < bevelSize) {
+      // より自然な面取りカーブの生成
+      const t = minDist / bevelSize;
+      const smooth = 1.0 - Math.pow(1.0 - t, 2); // 2次曲線による補間
+      
+      // エッジ部分の頂点移動を調整
+      const edgeFactor = 0.95; // エッジの鋭さを調整
+      if (edgeDistX < bevelSize) {
+        positions[i] *= (width - bevelSize * edgeFactor) / width;
+      }
+      if (edgeDistY < bevelSize) {
+        positions[i + 1] *= (height - bevelSize * edgeFactor) / height;
+      }
+      if (edgeDistZ < bevelSize) {
+        positions[i + 2] *= (depth - bevelSize * edgeFactor) / depth;
+      }
+    }
+  }
+
+  // 法線を更新
+  geometry.computeVertexNormals();
+
+  // マテリアルの改善
   const materials = [
-    new THREE.MeshStandardMaterial({ map: textures.right, roughness: 0.5, metalness: 0.0, emissiveMap: textures.right, emissive: new THREE.Color(0xffffff), emissiveIntensity: 0.09, clearcoat: 0.1 }),
-    new THREE.MeshStandardMaterial({ map: textures.left, roughness: 0.5, metalness: 0.0, emissiveMap: textures.left, emissive: new THREE.Color(0xffffff), emissiveIntensity: 0.09, clearcoat: 0.1 }),
-    new THREE.MeshStandardMaterial({ map: textures.top, roughness: 0.5, metalness: 0.0, emissiveMap: textures.top, emissive: new THREE.Color(0xffffff), emissiveIntensity: 0.09, clearcoat: 0.1 }),
-    new THREE.MeshStandardMaterial({ map: textures.bottom, roughness: 0.5, metalness: 0.0, emissiveMap: textures.bottom, emissive: new THREE.Color(0xffffff), emissiveIntensity: 0.09, clearcoat: 0.1 }),
-    new THREE.MeshStandardMaterial({ map: textures.front, roughness: 0.5, metalness: 0.0, emissiveMap: textures.front, emissive: new THREE.Color(0xffffff), emissiveIntensity: 0.09, clearcoat: 0.1 }),
-    new THREE.MeshStandardMaterial({ map: textures.back, roughness: 0.5, metalness: 0.0, emissiveMap: textures.back, emissive: new THREE.Color(0xffffff), emissiveIntensity: 0.09, clearcoat: 0.1 })
+    createSideMaterial(textures.right, 0.35),    // 右
+    createSideMaterial(textures.left, 0.35),     // 左
+    createSideMaterial(textures.top, 0.35),      // 上
+    createSideMaterial(textures.bottom, 0.35),   // 下
+    createSideMaterial(textures.front, 0.35),    // 前
+    createSideMaterial(textures.back, 0.35)      // 後
   ];
   
   box = new THREE.Mesh(geometry, materials);
   box.castShadow = true;
-  box.receiveShadow = false;
+  box.receiveShadow = true;
   scene.add(box);
 
   resetBoxRotationAndPosition();
   resetCamera();
+}
+
+// 箱の面のマテリアルを作成する関数
+function createSideMaterial(texture) {
+  return new THREE.MeshPhysicalMaterial({
+    map: texture,
+    roughness: 0.35,        // よりシャープな反射
+    metalness: 0.02,        // わずかな金属感
+    emissiveMap: texture,
+    emissive: new THREE.Color(0xffffff),
+    emissiveIntensity: 0.02, // より控えめな自己発光
+    clearcoat: 0.3,         // クリアコートを強く
+    clearcoatRoughness: 0.2, // クリアコートの粗さを調整
+    envMapIntensity: 0.8,   // 環境マップの反射
+    side: THREE.FrontSide,
+    shadowSide: THREE.FrontSide,
+  });
 }
 
 // アップロードされた画像をプレビュー表示
@@ -379,6 +483,17 @@ function createImagePreview(input, boxId) {
   });
 }
 
+// レンダラーのリサイズ処理
+function resizeRenderer() {
+  const width = container.clientWidth;
+  const height = container.clientHeight;
+  const size = Math.min(width, height);
+  
+  renderer.setSize(size, size);
+  camera.aspect = 1;
+  camera.updateProjectionMatrix();
+}
+
 // ステータスの更新
 function updateStatus() {
   const required = ['front', 'back', 'right', 'left', 'top', 'bottom'];
@@ -397,25 +512,45 @@ function updateStatus() {
   statusEl.classList.remove('hidden');
 }
 
+// 初期化
+document.addEventListener('DOMContentLoaded', () => {
+  container.appendChild(renderer.domElement);
+  resizeRenderer();
+  window.addEventListener('resize', resizeRenderer);
+  
+  ['front', 'back', 'right', 'left', 'top', 'bottom'].forEach(id => {
+    createImagePreview(document.getElementById(id), `${id}-box`);
+  });
+
+  const iblLoader = new THREE.TextureLoader();
+  iblLoader.load('studio_small_08.jpg', (texture) => {
+    texture.mapping = THREE.EquirectangularReflectionMapping;
+    texture.colorSpace = THREE.SRGBColorSpace;
+    scene.environment = texture;
+  });
+  // 背景画像が未設定なら完全な透明
+  renderer.setClearColor(0x000000, 0);
+  initializeUI();
+  animate();
+});
+
 // 背景画像の設定
 document.getElementById('bg').addEventListener('change', (e) => {
   const file = e.target.files[0];
   if (!file) return;
-  
   const url = URL.createObjectURL(file);
   loader.load(url, (tex) => {
     tex.colorSpace = THREE.SRGBColorSpace;
-    
     if (textures['bg'] && textures['bg'].texture) {
       textures['bg'].texture.dispose();
     }
-    
     scene.background = tex;
     textures['bg'] = { texture: tex };
+    // 背景画像がある場合は不透明で描画
+    renderer.setClearColor(0x000000, 1);
   });
 });
 
-// 背景リセット
 document.getElementById('reset-bg').addEventListener('click', () => {
   if (textures['bg']) {
     if (textures['bg'].texture) {
@@ -424,6 +559,8 @@ document.getElementById('reset-bg').addEventListener('click', () => {
     delete textures['bg'];
   }
   scene.background = null;
+  // 背景画像が未設定なら透明
+  renderer.setClearColor(0x000000, 0);
   
   const bgBox = document.getElementById('bg-box');
   const existingImg = bgBox.querySelector('img');
@@ -570,23 +707,47 @@ function animate() {
   renderer.render(scene, camera);
 }
 
-// 初期化
-document.addEventListener('DOMContentLoaded', () => {
-  container.appendChild(renderer.domElement);
-  resizeRenderer();
-  window.addEventListener('resize', resizeRenderer);
-  
-  ['front', 'back', 'right', 'left', 'top', 'bottom'].forEach(id => {
-    createImagePreview(document.getElementById(id), `${id}-box`);
+// 背景画像の設定
+document.getElementById('bg').addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const url = URL.createObjectURL(file);
+  loader.load(url, (tex) => {
+    tex.colorSpace = THREE.SRGBColorSpace;
+    if (textures['bg'] && textures['bg'].texture) {
+      textures['bg'].texture.dispose();
+    }
+    scene.background = tex;
+    textures['bg'] = { texture: tex };
+    // 背景画像がある場合は不透明で描画
+    renderer.setClearColor(0x000000, 1);
   });
+});
 
-  const iblLoader = new THREE.TextureLoader();
-  iblLoader.load('studio_small_08.jpg', (texture) => {
-    texture.mapping = THREE.EquirectangularReflectionMapping;
-    texture.colorSpace = THREE.SRGBColorSpace;
-    scene.environment = texture;
-  });
+document.getElementById('reset-bg').addEventListener('click', () => {
+  if (textures['bg']) {
+    if (textures['bg'].texture) {
+      textures['bg'].texture.dispose();
+    }
+    delete textures['bg'];
+  }
+  scene.background = null;
+  // 背景画像が未設定なら透明
+  renderer.setClearColor(0x000000, 0);
   
-  initializeUI();
-  animate();
+  const bgBox = document.getElementById('bg-box');
+  const existingImg = bgBox.querySelector('img');
+  if (existingImg) {
+    bgBox.removeChild(existingImg);
+  }
+  
+  const bgInput = document.getElementById('bg');
+  if (bgInput) {
+    bgInput.value = '';
+  }
+
+  const icon = bgBox.querySelector('.upload-icon');
+  const text = bgBox.querySelector('.upload-text');
+  if (icon) icon.style.display = '';
+  if (text) text.style.display = '';
 });
