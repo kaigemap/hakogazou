@@ -1,191 +1,183 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="stylesheet" href="style.css" />
-  <title>hakogazou - ボードゲーム箱ジェネレーター</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>hakogazou - ボードゲーム箱ジェネレーター</title>
+    <!-- Use Inter and Noto Sans JP for a premium feel matching the design -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <header>
+    <div class="header">
+        <h1>Box Generator</h1>
+        <div style="font-size: 0.8em; color: #888;">Modern UI v2</div>
+    </div>
+
     <div class="container">
-      <h1>ボードゲーム箱ジェネレーター</h1>
+        <div class="sidebar">
+            <div class="section">
+                <div class="section-title">Upload</div>
+                <!-- Bulk Upload Area -->
+                <div class="upload-area" id="bulk-upload-box">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="1.5">
+                        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/>
+                    </svg>
+                    <div class="upload-area-text">Drop files or click</div>
+                    <div class="upload-area-text" style="font-size: 0.7em; color: #aaa;">filename: front, back, top, etc.</div>
+                    <input type="file" id="bulk-upload" class="hidden-input" accept="image/*" multiple>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">Faces</div>
+                <div class="image-grid">
+                    <div class="image-item" id="front-box">
+                        <div class="image-label">Front</div>
+                        <input type="file" id="front" class="hidden-input" accept="image/*">
+                    </div>
+                    <div class="image-item" id="back-box">
+                        <div class="image-label">Back</div>
+                        <input type="file" id="back" class="hidden-input" accept="image/*">
+                    </div>
+                    <div class="image-item" id="right-box">
+                        <div class="image-label">Right</div>
+                        <input type="file" id="right" class="hidden-input" accept="image/*">
+                    </div>
+                    <div class="image-item" id="left-box">
+                        <div class="image-label">Left</div>
+                        <input type="file" id="left" class="hidden-input" accept="image/*">
+                    </div>
+                    <div class="image-item" id="top-box">
+                        <div class="image-label">Top</div>
+                        <input type="file" id="top" class="hidden-input" accept="image/*">
+                    </div>
+                    <div class="image-item" id="bottom-box">
+                        <div class="image-label">Bottom</div>
+                        <input type="file" id="bottom" class="hidden-input" accept="image/*">
+                    </div>
+                    <div class="image-item" id="bg-box">
+                        <div class="image-label">BG</div>
+                        <input type="file" id="bg" class="hidden-input" accept="image/*">
+                    </div>
+                </div>
+                <button id="reset-bg" class="btn-primary" style="margin-top: 12px; background: #e5e5e5; color: #333;">Reset BG</button>
+            </div>
+
+            <div class="section">
+                <div class="section-title">Display</div>
+                <div class="toggle-row">
+                    <div class="toggle-label">Shadow</div>
+                    <div class="toggle-wrapper">
+                        <input type="checkbox" id="shadowToggle" class="toggle-checkbox" checked>
+                        <label for="shadowToggle" class="toggle-track"></label>
+                    </div>
+                </div>
+                <div class="toggle-row">
+                    <div class="toggle-label">Auto rotate</div>
+                    <div class="toggle-wrapper">
+                        <input type="checkbox" id="rotateToggle" class="toggle-checkbox" checked>
+                        <label for="rotateToggle" class="toggle-track"></label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="control-row">
+                    <div class="control-label">
+                        <span>Orientation</span>
+                    </div>
+                    <select id="boxOrientation">
+                        <option value="stand">Standing</option>
+                        <option value="lay">Laying</option>
+                    </select>
+                </div>
+
+                <div class="control-row" id="layFaceGroup" style="display:none;">
+                    <div class="control-label">
+                        <span>Laying Face</span>
+                    </div>
+                    <select id="layFace">
+                        <option value="front">Front Up</option>
+                        <option value="back">Back Up</option>
+                    </select>
+                </div>
+
+                <div class="control-row">
+                    <div class="control-label">
+                        <span>Speed</span>
+                        <!-- <span class="control-value">50%</span> -->
+                    </div>
+                    <input type="range" id="rotateSpeed" min="0.001" max="0.02" step="0.001" value="0.005">
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">Camera</div>
+                <div class="control-row">
+                    <div class="control-label">
+                        <span>X Rotation</span>
+                        <span id="cameraXValue" class="control-value">20°</span>
+                    </div>
+                    <input type="range" id="cameraX" min="-89" max="89" value="20">
+                </div>
+                <div class="control-row">
+                    <div class="control-label">
+                        <span>Y Rotation</span>
+                        <span id="cameraYValue" class="control-value">45°</span>
+                    </div>
+                    <input type="range" id="cameraY" min="-180" max="180" value="45">
+                </div>
+                <div class="control-row">
+                    <div class="control-label">
+                        <span>Distance</span>
+                        <span id="cameraDistanceValue" class="control-value">2.2</span>
+                    </div>
+                    <input type="range" id="cameraDistance" min="1.2" max="10" value="2.2" step="0.1">
+                </div>
+            </div>
+
+            <div class="section">
+               <div id="status" class="status hidden"></div>
+            </div>
+
+            <!-- Download button moved to sidebar due to layout change or keep in toolbar? Design says sidebar has Export PNG -->
+            <!-- But main logic might expect it. Let's add it here as well or map the toolbar button to it -->
+        </div>
+
+        <div class="preview-area">
+            <div id="canvas-container" class="canvas-container"></div>
+            
+            <div class="toolbar">
+                <button class="tool-btn" id="resetViewBtn" title="Reset View">
+                    <!-- Eye/Reset Icon -->
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                        <circle cx="12" cy="12" r="3"/>
+                    </svg>
+                </button>
+                <button class="tool-btn" id="reset" title="Reset All">
+                    <!-- Refresh Icon -->
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M23 4v6h-6M1 20v-6h6"/>
+                        <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+                    </svg>
+                </button>
+                <button class="tool-btn" id="download" title="Export PNG">
+                    <!-- Download Icon -->
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
     </div>
-  </header>
 
-  <div class="container">
-    <div class="grid">
-      <div class="card">
-        <h2>箱の画像をアップロード</h2>
-        
-        <!-- 一括アップロード領域 -->
-        <div class="bulk-upload-section">
-          <h3>一括アップロード</h3>
-          <p class="help-text">
-          ファイル名に「front」「back」「top」「bottom」「right」「left」「bg」が含まれている画像は自動的に適切な位置に配置されます。</p>
-        
-          <div class="bulk-upload-box" id="bulk-upload-box">
-            <input type="file" id="bulk-upload" accept="image/*" multiple>
-            <div class="upload-icon" style="font-size: 2rem;">📂</div>
-            <div class="upload-text">複数の画像をここにドラッグ＆ドロップ</div>
-          </div>
-        </div>
-        
-        <div class="divider">または</div>
-        
-        <h3>個別にアップロード</h3>
-        <div class="upload-area">
-          <div class="upload-item">
-            <span class="upload-label">正面 
-              <div class="tooltip">?
-                <span class="tooltip-text">箱の前面の画像をアップロードしてください</span>
-              </div>
-            </span>
-            <div class="upload-box" id="front-box">
-              <input type="file" id="front" accept="image/*">
-              <div class="upload-icon">📷</div>
-              <div class="upload-text">クリックまたはドロップ</div>
-            </div>
-          </div>
-          <div class="upload-item">
-            <span class="upload-label">裏面</span>
-            <div class="upload-box" id="back-box">
-              <input type="file" id="back" accept="image/*">
-              <div class="upload-icon">📷</div>
-              <div class="upload-text">クリックまたはドロップ</div>
-            </div>
-          </div>
-          <div class="upload-item">
-            <span class="upload-label">右側面</span>
-            <div class="upload-box" id="right-box">
-              <input type="file" id="right" accept="image/*">
-              <div class="upload-icon">📷</div>
-              <div class="upload-text">クリックまたはドロップ</div>
-            </div>
-          </div>
-          <div class="upload-item">
-            <span class="upload-label">左側面</span>
-            <div class="upload-box" id="left-box">
-              <input type="file" id="left" accept="image/*">
-              <div class="upload-icon">📷</div>
-              <div class="upload-text">クリックまたはドロップ</div>
-            </div>
-          </div>
-          <div class="upload-item">
-            <span class="upload-label">上面</span>
-            <div class="upload-box" id="top-box">
-              <input type="file" id="top" accept="image/*">
-              <div class="upload-icon">📷</div>
-              <div class="upload-text">クリックまたはドロップ</div>
-            </div>
-          </div>
-          <div class="upload-item">
-            <span class="upload-label">底面</span>
-            <div class="upload-box" id="bottom-box">
-              <input type="file" id="bottom" accept="image/*">
-              <div class="upload-icon">📷</div>
-              <div class="upload-text">クリックまたはドロップ</div>
-            </div>
-          </div>
-        </div>
+    <!-- Toast -->
+    <div id="toast" class="toast hidden"></div>
 
-        <div class="settings-section">
-          <h2>背景設定</h2>
-          <div class="upload-item">
-            <span class="upload-label">背景画像 (オプション)</span>
-            <div class="upload-box" id="bg-box">
-              <input type="file" id="bg" accept="image/*">
-              <div class="upload-icon">🖼️</div>
-              <div class="upload-text">背景画像をアップロード</div>
-            </div>
-          </div>
-          <button id="reset-bg" style="margin-top: 0.5rem;">背景をリセット</button>
-        </div>
-
-        <div class="settings-section">
-          <h2>表示設定</h2>
-          <div class="checkbox-container">
-            <input type="checkbox" id="shadowToggle" checked>
-            <label for="shadowToggle">落ち影を表示</label>
-          </div>
-
-          <div class="checkbox-container">
-            <input type="checkbox" id="rotateToggle" checked>
-            <label for="rotateToggle">自動回転</label>
-          </div>
-
-          <div class="control-group">
-            <label for="boxOrientation">箱の向き:</label>
-            <select id="boxOrientation">
-              <option value="stand">立てる</option>
-              <option value="lay">寝かせる</option>
-            </select>
-          </div>
-
-          <div class="control-group" id="layFaceGroup" style="display:none;">
-            <label for="layFace">寝かせた時の上面:</label>
-            <select id="layFace">
-              <option value="front">正面が上</option>
-              <option value="back">裏面が上</option>
-            </select>
-          </div>
-
-          <div class="speed-control">
-            <label for="rotateSpeed">回転速度:</label>
-            <input type="range" id="rotateSpeed" class="speed-slider" min="0.001" max="0.02" step="0.001" value="0.005">
-          </div>
-        </div>
-
-        <div class="settings-section">
-          <h2>視点設定</h2>
-          <div class="camera-controls" style="display: block;">
-            <div class="control-group">
-              <label for="cameraX">X軸回転:</label>
-              <input type="range" id="cameraX" min="-89" max="89" value="20">
-              <span id="cameraXValue">20°</span>
-            </div>
-            <div class="control-group">
-              <label for="cameraY">Y軸回転:</label>
-              <input type="range" id="cameraY" min="-180" max="180" value="45">
-              <span id="cameraYValue">45°</span>
-            </div>
-            <div class="control-group">
-              <label for="cameraDistance">距離:</label>
-              <input type="range" id="cameraDistance" min="1.2" max="10" value="2.2" step="0.1">
-              <span id="cameraDistanceValue">2.2</span>
-            </div>
-          </div>
-        </div>
-
-        <div id="status" class="status hidden"></div>
-      </div>
-
-      <div class="card">
-        <h2>3Dプレビュー</h2>
-        <div class="preview-container">
-          <div id="canvas-container" class="canvas-container"></div>
-          
-          <div class="control-group">
-            <button id="download" type="button">
-              <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
-                <path fill="none" d="M0 0h24v24H0z"/>
-                <path d="M4 19h16v-7h2v8a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1v-8h2v7zm9-10v7h-2V9H6l6-6 6 6h-5z" fill="currentColor"/>
-              </svg>
-              画像を保存
-            </button>
-          </div>
-          <div class="control-group">
-            <button id="reset" type="button">すべてリセット</button>
-            <button id="resetViewBtn" type="button">視点リセット</button>
-          </div>
-        </div>
-
-      </div>
-    </div>
-  </div>
-
-  <script type="module" src="main.js"></script>
-
-  <div id="toast" class="toast hidden"></div>
+    <script type="module" src="main.js"></script>
 </body>
 </html>

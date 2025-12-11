@@ -485,8 +485,8 @@ function createImagePreview(input, boxId) {
     const img = document.createElement('img');
     img.src = URL.createObjectURL(file);
     img.onload = () => {
-      icon.style.display = 'none';
-      text.style.display = 'none';
+      if (icon) icon.style.display = 'none';
+      if (text) text.style.display = 'none';
       box.appendChild(img);
     };
     
