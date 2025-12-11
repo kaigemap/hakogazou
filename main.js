@@ -277,7 +277,7 @@ function setupEventListeners() {
 
     // 元のサイズに戻す
     renderer.setSize(originalSize.x, originalSize.y, false);
-    camera.aspect = 1;
+    camera.aspect = originalSize.x / originalSize.y;
     camera.updateProjectionMatrix();
   });
 
@@ -506,10 +506,8 @@ function createImagePreview(input, boxId) {
 function resizeRenderer() {
   const width = container.clientWidth;
   const height = container.clientHeight;
-  const size = Math.min(width, height);
-  
-  renderer.setSize(size, size);
-  camera.aspect = 1;
+  renderer.setSize(width, height);
+  camera.aspect = width / height;
   camera.updateProjectionMatrix();
 }
 
