@@ -2,6 +2,7 @@ import * as THREE from 'three';
 
 // グローバル変数
 let box;
+let shadowPlane; // 擬似影用のプレーン
 const textures = {};
 let isRotating = true;
 let rotateSpeed = 0.005;
@@ -25,43 +26,30 @@ const renderer = new THREE.WebGLRenderer({
 scene.background = null;
 renderer.setPixelRatio(window.devicePixelRatio);
 renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = THREE.PCFSoftShadowMap; // 影を柔らかくする
+renderer.shadowMap.enabled = false; // 3D影は無効化し、テクスチャ影へ移行
+renderer.toneMapping = THREE.LinearToneMapping;
+renderer.toneMappingExposure = 1.5;
 renderer.setClearColor(0x000000, 0);
 document.body.appendChild(renderer.domElement);
 
-// 床の設定
+// 床の設定 (影は受けないが、基準面として存在)
 const groundGeometry = new THREE.PlaneGeometry(30, 30);
-const groundMaterial = new THREE.ShadowMaterial({ 
-  opacity: 0.5,  // 影の濃さを調整
-  transparent: true,
-  depthWrite: false,
+const groundMaterial = new THREE.MeshBasicMaterial({ 
+  visible: false // 床自体は見えない
 });
 const ground = new THREE.Mesh(groundGeometry, groundMaterial);
 ground.rotation.x = -Math.PI / 2;
 ground.position.y = -0.001;
-ground.receiveShadow = true;
 scene.add(ground);
 
 // ライト設定
-const ambientLight = new THREE.AmbientLight(0xffffff, 1.1);
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
 scene.add(ambientLight);
 
-// メインライト
-const directionalLight = new THREE.DirectionalLight(0xffffff, 0.3);
+// メインライト (Shading Only)
+const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
 directionalLight.position.set(0, 2, 0);
-directionalLight.castShadow = true;
-directionalLight.shadow.mapSize.width = 8192;  // 超高解像度のシャドウマップ
-directionalLight.shadow.mapSize.height = 8192;
-directionalLight.shadow.camera.near = 0.1;
-directionalLight.shadow.camera.far = 20;
-directionalLight.shadow.camera.left = -5;
-directionalLight.shadow.camera.right = 5;
-directionalLight.shadow.camera.top = 5;
-directionalLight.shadow.camera.bottom = -5;
-directionalLight.shadow.radius = 8;     // よりソフトな影
-directionalLight.shadow.bias = -0.00002; // シャドウアクネ防止
-directionalLight.shadow.normalBias = 0.01; // セルフシャドウイングの改善
+directionalLight.castShadow = false;
 scene.add(directionalLight);
 
 // ポイントライト（補助用）
@@ -90,11 +78,7 @@ spotLight1.angle = Math.PI / 8; // 角度を狭める（PI/6からPI/8に）
 spotLight1.penumbra = 0.7; // ペナンブラを0.9から0.7に調整
 spotLight1.decay = 2; // 減衰を1.5から2に強める
 spotLight1.distance = 5; // 距離を8から5に短縮
-spotLight1.castShadow = true;
-spotLight1.shadow.mapSize.width = 4096;
-spotLight1.shadow.mapSize.height = 4096;
-spotLight1.shadow.radius = 8; // 影のブラーを5から3に調整
-spotLight1.shadow.bias = -0.00005;
+spotLight1.castShadow = false; // 影はオフ
 scene.add(spotLight1);
 
 const spotLight2 = new THREE.SpotLight(0xffffff, 0.2);
@@ -103,11 +87,7 @@ spotLight2.angle = Math.PI / 5;
 spotLight2.penumbra = 0.8;
 spotLight2.decay = 1.5;
 spotLight2.distance = 10;
-spotLight2.castShadow = true;
-spotLight2.shadow.mapSize.width = 4096;
-spotLight2.shadow.mapSize.height = 4096;
-spotLight2.shadow.radius = 8;
-spotLight2.shadow.bias = -0.00005;
+spotLight2.castShadow = false; // 影はオフ
 scene.add(spotLight2);
 
 // テクスチャローダー
@@ -164,13 +144,22 @@ function resetBoxRotationAndPosition() {
   const width = geometry.parameters.width;
   const height = geometry.parameters.height;
   const depth = geometry.parameters.depth;
+  
+  const shadowScale = 1.5; // 余白分
+  
+  // 影の回転をリセット（アニメーションの残留を防ぐ）
+  if (shadowPlane) shadowPlane.rotation.z = 0;
 
   // 箱の位置と回転を設定
   if (boxOrientation === 'lay') {
       if (layFace === 'front') {
         box.rotation.set(-Math.PI/2, 0, 0);
+        // 接地面: width x height
+        if (shadowPlane) shadowPlane.scale.set(width * shadowScale, height * shadowScale, 1);
       } else {
         box.rotation.set(Math.PI/2, 0, Math.PI);
+        // 接地面: width x height (裏返しでも同じ)
+        if (shadowPlane) shadowPlane.scale.set(width * shadowScale, height * shadowScale, 1);
       }
       box.position.y = ground.position.y + (depth / 2) + 0.001;
 
@@ -179,14 +168,11 @@ function resetBoxRotationAndPosition() {
       directionalLight.intensity = 0.6;
       pointLight.position.set(-2, 4, -2);
       fillLight.position.set(2, 4, 2);
-      
-      // スポットライトの位置調整（寝かせた時）
-      spotLight1.position.set(4, 6, 4);
-      spotLight1.intensity = 0.3;
-      spotLight2.position.set(-4, 5, -3);
-      spotLight2.intensity = 0.2;
   } else {
     box.rotation.set(0, 0, 0);
+    // 接地面: width x depth
+    if (shadowPlane) shadowPlane.scale.set(width * shadowScale, depth * shadowScale, 1);
+    
     box.position.y = ground.position.y + (height / 2) + 0.001;
 
     // 立てた時のライト位置を設定
@@ -194,12 +180,6 @@ function resetBoxRotationAndPosition() {
     directionalLight.intensity = 1.4;
     pointLight.position.set(-3, 3, -3);
     fillLight.position.set(-3, 5, -5);
-    
-    // スポットライトの位置調整（立てた時）
-    spotLight1.position.set(3, 4, 3);
-    spotLight1.intensity = 0.4;
-    spotLight2.position.set(-4, 3, -2);
-    spotLight2.intensity = 0.3;
   }
 }
 
@@ -245,11 +225,24 @@ function setupEventListeners() {
   });
 
   document.getElementById('shadowToggle').addEventListener('change', (e) => {
-    ground.visible = e.target.checked;
+    if (shadowPlane) shadowPlane.visible = e.target.checked;
   });
 
   document.getElementById('rotateToggle').addEventListener('change', (e) => {
     isRotating = e.target.checked;
+    
+    // ツールバーのボタンアイコンも更新
+    const pauseIcon = document.getElementById('pauseIcon');
+    const playIcon = document.getElementById('playIcon');
+    if (pauseIcon && playIcon) {
+        if (isRotating) {
+            pauseIcon.classList.remove('hidden');
+            playIcon.classList.add('hidden');
+        } else {
+            pauseIcon.classList.add('hidden');
+            playIcon.classList.remove('hidden');
+        }
+    }
   });
 
   document.getElementById('rotateSpeed').addEventListener('input', (e) => {
@@ -444,8 +437,28 @@ function createBox() {
   ];
   
   box = new THREE.Mesh(geometry, materials);
-  box.castShadow = true;
-  box.receiveShadow = true;
+  box = new THREE.Mesh(geometry, materials);
+  box.castShadow = false; 
+  box.receiveShadow = false;
+
+  // テクスチャによる擬似影 (Fake Shadow)
+  // 以前の影があれば削除
+  if (shadowPlane) scene.remove(shadowPlane);
+  
+  const shadowTexture = generateShadowTexture();
+  const shadowMaterial = new THREE.MeshBasicMaterial({
+    map: shadowTexture,
+    transparent: true,
+    opacity: 0.8,
+    depthWrite: false, 
+  });
+  
+  // 1x1のプレーンを作成（後でスケール調整）
+  shadowPlane = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), shadowMaterial);
+  shadowPlane.rotation.x = -Math.PI / 2;
+  shadowPlane.position.y = -0.001 + 0.002; // 床のわずかに上
+  scene.add(shadowPlane);
+  
   scene.add(box);
 
   resetBoxRotationAndPosition();
@@ -456,14 +469,18 @@ function createBox() {
 function createSideMaterial(texture) {
   return new THREE.MeshPhysicalMaterial({
     map: texture,
-    roughness: 0.35,        // よりシャープな反射
+    roughness: 0.2,        // よりシャープな反射
     metalness: 0.02,        // わずかな金属感
     emissiveMap: texture,
     emissive: new THREE.Color(0xffffff),
-    emissiveIntensity: 0.02, // より控えめな自己発光
-    clearcoat: 0.3,         // クリアコートを強く
-    clearcoatRoughness: 0.2, // クリアコートの粗さを調整
-    envMapIntensity: 0.8,   // 環境マップの反射
+    roughness: 0.6,         // マットな質感（0.2から変更）
+    metalness: 0.0,         // 金属感なし
+    emissiveMap: texture,
+    emissive: new THREE.Color(0xffffff),
+    emissiveIntensity: 0.0, // 自己発光なし
+    clearcoat: 0.0,         // クリアコートなし
+    clearcoatRoughness: 0.0,
+    envMapIntensity: 0.6,   // 環境反射を少し抑える
     side: THREE.FrontSide,
     shadowSide: THREE.FrontSide,
   });
@@ -567,6 +584,68 @@ document.addEventListener('DOMContentLoaded', () => {
   // アニメーション開始
   animate();
 });
+
+// 擬似影用のテクスチャ生成
+// リセットボタン（全リセット）- サイドバーへ移動
+const resetAllBtn = document.getElementById('resetAll');
+if (resetAllBtn) {
+    resetAllBtn.addEventListener('click', () => {
+        if (confirm('すべての状態をリセットしますか？')) {
+            window.location.reload();
+        }
+    });
+}
+
+// アニメーション一時停止/再開 - ツールバーへ移動
+const toggleAnimBtn = document.getElementById('toggleAnimation');
+const pauseIcon = document.getElementById('pauseIcon');
+const playIcon = document.getElementById('playIcon');
+
+if (toggleAnimBtn) {
+    toggleAnimBtn.addEventListener('click', () => {
+        isRotating = !isRotating;
+        
+        // アイコン切り替え
+        if (isRotating) {
+            pauseIcon.classList.remove('hidden');
+            playIcon.classList.add('hidden');
+        } else {
+            pauseIcon.classList.add('hidden');
+            playIcon.classList.remove('hidden');
+        }
+        
+        // サイドバーのチェックボックスとも同期
+        const rotateToggle = document.getElementById('rotateToggle');
+        if (rotateToggle) rotateToggle.checked = isRotating;
+    });
+}
+
+// 以前のリセットボタンリスナーは削除（IDが変わったため自然に無効化されるが、念のためクリーンアップ）
+
+// 擬似影用のテクスチャ生成
+function generateShadowTexture() {
+  const canvas = document.createElement('canvas');
+  canvas.width = 128;
+  canvas.height = 128;
+  const context = canvas.getContext('2d');
+
+  const gradient = context.createRadialGradient(
+    canvas.width / 2,
+    canvas.height / 2,
+    0,
+    canvas.width / 2,
+    canvas.height / 2,
+    canvas.width / 2
+  );
+
+  gradient.addColorStop(0, 'rgba(0, 0, 0, 0.6)'); // 中心は少し濃く
+  gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');   // 外側は透明
+
+  context.fillStyle = gradient;
+  context.fillRect(0, 0, canvas.width, canvas.height);
+
+  return new THREE.CanvasTexture(canvas);
+}
 
 // 背景画像の設定
 document.getElementById('bg').addEventListener('change', (e) => {
@@ -758,6 +837,10 @@ function animate() {
   
   if (box && isRotating && boxOrientation === 'stand') {
     box.rotation.y += rotateSpeed;
+    // 影も一緒に回転させる（楕円形の向きを合わせる）
+    if (shadowPlane) {
+        shadowPlane.rotation.z = box.rotation.y;
+    }
   }
   
   renderer.render(scene, camera);

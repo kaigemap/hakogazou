@@ -140,7 +140,14 @@
             </div>
 
             <div class="section">
-               <div id="status" class="status hidden"></div>
+                <button id="resetAll" class="secondary-btn" style="width: 100%; margin-bottom: 10px;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 8px;">
+                        <path d="M23 4v6h-6M1 20v-6h6"/>
+                        <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+                    </svg>
+                    Reset All
+                </button>
+                <div id="status" class="status hidden"></div>
             </div>
 
             <!-- Download button moved to sidebar due to layout change or keep in toolbar? Design says sidebar has Export PNG -->
@@ -152,21 +159,22 @@
             
             <div class="toolbar">
                 <button class="tool-btn" id="resetViewBtn" data-tooltip="視点リセット">
-                    <!-- Eye/Reset Icon -->
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
                         <circle cx="12" cy="12" r="3"/>
                     </svg>
                 </button>
-                <button class="tool-btn" id="reset" data-tooltip="全リセット">
-                    <!-- Refresh Icon -->
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M23 4v6h-6M1 20v-6h6"/>
-                        <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+                <button class="tool-btn" id="toggleAnimation" data-tooltip="回転 一時停止/再開">
+                    <!-- Pause/Play Icon (Start with Pause) -->
+                    <svg id="pauseIcon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="6" y="4" width="4" height="16"></rect>
+                        <rect x="14" y="4" width="4" height="16"></rect>
+                    </svg>
+                    <svg id="playIcon" class="hidden" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polygon points="5 3 19 12 5 21 5 3"></polygon>
                     </svg>
                 </button>
                 <button class="tool-btn" id="download" data-tooltip="画像を保存">
-                    <!-- Download Icon -->
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/>
                     </svg>
