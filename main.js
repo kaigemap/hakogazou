@@ -28,7 +28,7 @@ renderer.setPixelRatio(window.devicePixelRatio);
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.shadowMap.enabled = false; // 3D影は無効化し、テクスチャ影へ移行
 renderer.toneMapping = THREE.LinearToneMapping;
-renderer.toneMappingExposure = 1.5;
+renderer.toneMappingExposure = 1.8; // マット素材に合わせて少し明るく調整
 renderer.setClearColor(0x000000, 0);
 document.body.appendChild(renderer.domElement);
 
