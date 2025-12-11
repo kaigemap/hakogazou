@@ -1,4 +1,4 @@
-import * as THREE from 'https://unpkg.com/three@0.159.0/build/three.module.js';
+import * as THREE from 'three';
 
 // グローバル変数
 let box;
@@ -11,7 +11,7 @@ let layFace = 'front';
 // three.jsの初期化
 const container = document.getElementById('canvas-container');
 const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(35, 1, 0.1, 100); // より狭い画角で望遠効果を出す
+let camera = new THREE.PerspectiveCamera(35, 1, 0.1, 100); // より狭い画角で望遠効果を出す
 camera.position.set(0, 0.35, 4); // 箱の高さの半分を基準に設定（baseHeight = 0.7の半分）
 camera.lookAt(0, 0.35, 0);
 const renderer = new THREE.WebGLRenderer({
