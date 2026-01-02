@@ -24,7 +24,7 @@ body {
 }
 
 .header {
-    padding: 28px 40px;
+    padding: 16px 40px;
     border-bottom: 1px solid #e5e5e5;
     backdrop-filter: blur(20px);
     background: rgba(255, 255, 255, 0.8);
@@ -41,6 +41,37 @@ body {
     font-weight: 700;
     letter-spacing: -0.5px;
     color: #0a0a0a;
+}
+
+/* Segmented Control */
+.segmented-control {
+    background: #f0f0f0;
+    padding: 3px;
+    border-radius: 6px;
+    display: flex;
+    gap: 2px;
+    margin-left: auto;
+}
+
+.segmented-option {
+    padding: 4px 12px;
+    font-size: 0.8em;
+    font-weight: 600;
+    color: #888;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.2s;
+    user-select: none;
+}
+
+.segmented-option:hover {
+    color: #666;
+}
+
+.segmented-option.active {
+    background: #fff;
+    color: #0a0a0a;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
 }
 
 .container {
@@ -129,7 +160,8 @@ body {
     background: #fafafa;
     border: 1px solid #e5e5e5;
     border-radius: 6px;
-    overflow: hidden;
+    /* overflow: hidden; Removed to allow tooltips/icons to overflow */
+    overflow: visible;
     cursor: pointer;
     transition: all 0.2s;
     position: relative;
@@ -137,6 +169,7 @@ body {
 
 .image-item:hover {
     border-color: #d0d0d0;
+    z-index: 20; /* Ensure tooltips show above siblings */
 }
 
 .image-item img {
@@ -144,6 +177,7 @@ body {
     height: 100%;
     object-fit: contain;
     z-index: 1;
+    border-radius: 6px; /* Moved here */
 }
 
 .image-label {
@@ -158,6 +192,32 @@ body {
     font-weight: 500;
     z-index: 2;
     pointer-events: none;
+}
+
+/* Specificity increased to override [data-tooltip] { position: relative } */
+.image-item .icon-btn-overlay {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 24px;
+    height: 24px;
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(0,0,0,0.1);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 10;
+    color: #666;
+    transition: all 0.2s;
+    padding: 0;
+}
+
+.image-item .icon-btn-overlay:hover {
+    background: #fff;
+    color: #d00;
+    border-color: rgba(221, 0, 0, 0.2);
 }
 
 .control-row {
@@ -184,6 +244,7 @@ input[type="range"] {
     background: #e5e5e5;
     outline: none;
     -webkit-appearance: none;
+    appearance: none;
     border-radius: 1px;
 }
 

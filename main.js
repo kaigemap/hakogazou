@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { translations } from './translations.js';
 
 // グローバル変数
 let box;
@@ -8,6 +9,7 @@ let isRotating = true;
 let rotateSpeed = 0.005;
 let boxOrientation = 'stand';
 let layFace = 'front';
+let currentLang = localStorage.getItem('lang') || 'ja';
 
 // three.jsの初期化
 const container = document.getElementById('canvas-container');
@@ -183,9 +185,40 @@ function resetBoxRotationAndPosition() {
   }
 }
 
+// 言語更新
+function updateLanguage(lang) {
+  currentLang = lang;
+  localStorage.setItem('lang', currentLang);
+  
+  const t = translations[lang];
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    if (t[key]) el.textContent = t[key];
+  });
+  document.querySelectorAll('[data-i18n-tooltip]').forEach(el => {
+    const key = el.getAttribute('data-i18n-tooltip');
+    if (t[key]) el.setAttribute('data-tooltip', t[key]);
+  });
+  
+  // セグメンテッドコントロールの表示更新
+  document.querySelectorAll('.segmented-option').forEach(opt => {
+    if (opt.dataset.lang === lang) {
+      opt.classList.add('active');
+    } else {
+      opt.classList.remove('active');
+    }
+  });
+  
+  updateStatus();
+}
+
 // UIの初期化
 function initializeUI() {
-  boxOrientation = document.getElementById('boxOrientation').value;
+  updateLanguage(currentLang);
+  boxOrientation = 'stand'; // Default
+  const activeOrientation = document.querySelector('#orientationControl .segmented-option.active');
+  if (activeOrientation) boxOrientation = activeOrientation.dataset.value;
+
   layFace = document.getElementById('layFace').value;
   
   const layFaceGroup = document.getElementById('layFaceGroup');
@@ -201,12 +234,48 @@ function initializeUI() {
 
 // イベントリスナーの設定
 function setupEventListeners() {
+  // 言語切り替え
+  document.querySelectorAll('#langControl .segmented-option').forEach(opt => {
+    opt.addEventListener('click', (e) => {
+      const lang = e.target.dataset.lang;
+      updateLanguage(lang);
+    });
+  });
+
+  // 置き方切り替え
+  document.querySelectorAll('#orientationControl .segmented-option').forEach(opt => {
+    opt.addEventListener('click', (e) => {
+        // Activeクラスの切り替え
+        document.querySelectorAll('#orientationControl .segmented-option').forEach(el => el.classList.remove('active'));
+        e.target.classList.add('active');
+
+        boxOrientation = e.target.dataset.value;
+        const layFaceGroup = document.getElementById('layFaceGroup');
+        layFaceGroup.style.display = boxOrientation === 'lay' ? 'block' : 'none';
+        resetBoxRotationAndPosition();
+        resetCamera();
+    });
+  });
+
+  /* Removed old select listener
   document.getElementById('boxOrientation').addEventListener('change', (e) => {
     boxOrientation = e.target.value;
     const layFaceGroup = document.getElementById('layFaceGroup');
     layFaceGroup.style.display = boxOrientation === 'lay' ? 'block' : 'none';
     resetBoxRotationAndPosition();
     resetCamera();
+  });
+  */
+
+  // Config Save/Load
+  document.getElementById('saveConfig').addEventListener('click', saveConfiguration);
+  document.getElementById('loadConfigBtn').addEventListener('click', () => {
+    document.getElementById('loadConfigInput').click();
+  });
+  document.getElementById('loadConfigInput').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (file) loadConfiguration(file);
+    e.target.value = ''; // Reset to allow reloading same file
   });
 
   document.getElementById('layFace').addEventListener('change', (e) => {
@@ -297,7 +366,7 @@ function handleMouseMove(e) {
     const xAngle = parseFloat(document.getElementById('cameraX').value);
     const yAngle = parseFloat(document.getElementById('cameraY').value);
     
-    document.getElementById('cameraY').value = ((yAngle + deltaMove.x * 0.5) + 180) % 360 - 180;
+    document.getElementById('cameraY').value = ((yAngle - deltaMove.x * 0.5) + 180) % 360 - 180;
     document.getElementById('cameraX').value = Math.max(-89, Math.min(89, xAngle + deltaMove.y * 0.5));
     
     updateSliderValue('cameraX');
@@ -534,12 +603,14 @@ function updateStatus() {
   const missing = required.filter(k => !textures[k]);
   
   const statusEl = document.getElementById('status');
+  const t = translations[currentLang];
   
   if (missing.length === 0) {
-    statusEl.textContent = '✅ すべての画像がアップロードされました！';
+    statusEl.textContent = t.msg_upload_success;
     statusEl.className = 'status success';
   } else {
-    statusEl.textContent = `⚠️ ${missing.length}つの画像が未アップロードです: ${missing.join(', ')}`;
+    const missingNames = missing.map(k => t['face_' + k] || k);
+    statusEl.textContent = t.msg_upload_missing + missingNames.join(', ');
     statusEl.className = 'status error';
   }
   
@@ -587,10 +658,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // 擬似影用のテクスチャ生成
 // リセットボタン（全リセット）- サイドバーへ移動
+// リセットボタン（全リセット）- サイドバーへ移動
 const resetAllBtn = document.getElementById('resetAll');
 if (resetAllBtn) {
     resetAllBtn.addEventListener('click', () => {
-        if (confirm('すべての状態をリセットしますか？')) {
+        if (confirm(translations[currentLang].msg_reset_confirm)) {
             window.location.reload();
         }
     });
@@ -726,18 +798,10 @@ function showToast(message, duration = 3000) {
 }
 
 // 面の表示名を取得する関数
+// 面の表示名を取得する関数
 function getFaceDisplayName(face) {
-  const displayNames = {
-    'front': '正面',
-    'back': '裏面',
-    'top': '上面',
-    'bottom': '底面',
-    'right': '右側面',
-    'left': '左側面',
-    'bg': '背景'
-  };
-  
-  return displayNames[face] || face;
+  const key = 'face_' + face;
+  return translations[currentLang][key] || face;
 }
 
 // 一括アップロードの処理
@@ -751,7 +815,7 @@ function handleBulkUpload(files) {
   
   Array.from(files).forEach(file => {
     if (!file.type.startsWith('image/')) {
-      showToast(`${file.name} - 画像ファイルではありません`, 3000);
+      showToast(`${file.name} - ${translations[currentLang].msg_not_image}`, 3000);
       return;
     }
     
@@ -773,12 +837,13 @@ function handleBulkUpload(files) {
   });
   
   let toastMsg = '';
+  const t = translations[currentLang];
   if (results.success.length) {
-    toastMsg += '割り当て成功:\n' + results.success.map(item => 
+    toastMsg += t.msg_assign_success + '\n' + results.success.map(item => 
       `${item.name} → ${getFaceDisplayName(item.face)}`).join('\n') + '\n';
   }
   if (results.notMatched.length) {
-    toastMsg += '未割り当て:\n' + results.notMatched.join('\n');
+    toastMsg += t.msg_unassigned + '\n' + results.notMatched.join('\n');
   }
   if (toastMsg) showToast(toastMsg.trim(), 5000);
 }
@@ -873,3 +938,111 @@ document.getElementById('reset-bg').addEventListener('click', () => {
   if (icon) icon.style.display = '';
   if (text) text.style.display = '';
 });
+
+// 設定の保存
+function saveConfiguration() {
+    const config = {
+        boxOrientation,
+        layFace,
+        rotateSpeed,
+        cameraX: document.getElementById('cameraX').value,
+        cameraY: document.getElementById('cameraY').value,
+        cameraDistance: document.getElementById('cameraDistance').value,
+        isRotating: document.getElementById('rotateToggle').checked,
+        shadowVisible: document.getElementById('shadowToggle').checked,
+        language: currentLang,
+        timestamp: new Date().toISOString()
+    };
+
+    const blob = new Blob([JSON.stringify(config, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'hakogazou-config.json';
+    link.click();
+    URL.revokeObjectURL(url);
+}
+
+// 設定の読み込み
+function loadConfiguration(file) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        try {
+            const config = JSON.parse(e.target.result);
+            
+            // Validate minimal required fields
+            if (!config.boxOrientation) throw new Error('Invalid config');
+
+            // Apply values
+            boxOrientation = config.boxOrientation;
+            layFace = config.layFace || 'front';
+            rotateSpeed = config.rotateSpeed || 0.005;
+            isRotating = config.isRotating !== undefined ? config.isRotating : true;
+            currentLang = config.language || 'ja';
+
+            // UI Elements Update
+            document.getElementById('cameraX').value = config.cameraX || 0;
+            document.getElementById('cameraY').value = config.cameraY || 0;
+            document.getElementById('cameraDistance').value = config.cameraDistance || 2.2;
+            document.getElementById('rotateSpeed').value = rotateSpeed;
+            document.getElementById('rotateToggle').checked = isRotating;
+            document.getElementById('shadowToggle').checked = config.shadowVisible !== undefined ? config.shadowVisible : true;
+            
+            // Selects & Segmented Controls
+            document.getElementById('layFace').value = layFace;
+            
+            // Update Orientation Segmented Control
+            document.querySelectorAll('#orientationControl .segmented-option').forEach(opt => {
+                if (opt.dataset.value === boxOrientation) {
+                    opt.classList.add('active');
+                } else {
+                    opt.classList.remove('active');
+                }
+            });
+
+            // Update Language
+            localStorage.setItem('lang', currentLang);
+            updateLanguage(currentLang);
+
+            // Trigger updates
+            updateSliderValue('cameraX');
+            updateSliderValue('cameraY');
+            updateSliderValue('cameraDistance');
+            
+            const layFaceGroup = document.getElementById('layFaceGroup');
+            layFaceGroup.style.display = boxOrientation === 'lay' ? 'block' : 'none';
+
+            // Shadow visibility
+            if (shadowPlane) shadowPlane.visible = document.getElementById('shadowToggle').checked;
+
+            // Apply Camera & Box updates
+            resetBoxRotationAndPosition();
+            updateCameraFromUI();
+            
+            // Animation state
+            const pauseIcon = document.getElementById('pauseIcon');
+            const playIcon = document.getElementById('playIcon');
+            if (pauseIcon && playIcon) {
+                if (isRotating) {
+                    pauseIcon.classList.remove('hidden');
+                    playIcon.classList.add('hidden');
+                } else {
+                    pauseIcon.classList.add('hidden');
+                    playIcon.classList.remove('hidden');
+                }
+            }
+
+            // Sync visual checkbox state
+            const rotateToggle = document.getElementById('rotateToggle');
+            if (rotateToggle) rotateToggle.checked = isRotating;
+
+            showToast('Configuration loaded successfully!', 2000);
+
+        } catch (err) {
+            console.error(err);
+            const msg = (translations[currentLang] && translations[currentLang].msg_load_error) ? translations[currentLang].msg_load_error : 'Error loading config';
+            showToast(msg, 3000);
+        }
+    };
+    reader.readAsText(file);
+}

@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>hakogazou - ボードゲーム箱ジェネレーター</title>
+    <title data-i18n="page_title">hakogazou - Box Generator</title>
     <!-- Use Inter and Noto Sans JP for a premium feel matching the design -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -12,71 +12,80 @@
 </head>
 <body>
     <div class="header">
-        <h1>Box Generator</h1>
-        <div style="font-size: 0.8em; color: #888;">Modern UI v2</div>
+        <div style="display: flex; align-items: center;">
+            <h1 data-i18n="header_title" style="margin: 0;">Hakogazou</h1>
+        </div>
+        <div class="segmented-control" id="langControl">
+            <div class="segmented-option" data-lang="ja">JP</div>
+            <div class="segmented-option" data-lang="en">EN</div>
+        </div>
     </div>
 
     <div class="container">
         <div class="sidebar">
             <div class="section">
-                <div class="section-title">Upload</div>
+                <div class="section-title" data-i18n="section_upload">Upload</div>
                 <!-- Bulk Upload Area -->
                 <div class="upload-area" id="bulk-upload-box">
                     <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="1.5">
                         <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/>
                     </svg>
-                    <div class="upload-area-text">Drop files or click</div>
-                    <div class="upload-area-text" style="font-size: 0.7em; color: #aaa;">filename: front, back, top, etc.</div>
+                    <div class="upload-area-text" data-i18n="upload_drop">Drop files or click</div>
+                    <div class="upload-area-text" style="font-size: 0.7em; color: #aaa;" data-i18n="upload_hint">filename: front, back, top, etc.</div>
                     <input type="file" id="bulk-upload" class="hidden-input" accept="image/*" multiple>
                 </div>
             </div>
 
             <div class="section">
-                <div class="section-title">Faces</div>
+                <div class="section-title" data-i18n="section_faces">Faces</div>
                 <div class="image-grid">
                     <div class="image-item" id="front-box">
-                        <div class="image-label">Front</div>
+                        <div class="image-label" data-i18n="label_front">Front</div>
                         <input type="file" id="front" class="hidden-input" accept="image/*">
                     </div>
                     <div class="image-item" id="back-box">
-                        <div class="image-label">Back</div>
+                        <div class="image-label" data-i18n="label_back">Back</div>
                         <input type="file" id="back" class="hidden-input" accept="image/*">
                     </div>
-                    <div class="image-item" id="right-box">
-                        <div class="image-label">Right</div>
-                        <input type="file" id="right" class="hidden-input" accept="image/*">
-                    </div>
                     <div class="image-item" id="left-box">
-                        <div class="image-label">Left</div>
+                        <div class="image-label" data-i18n="label_left">Left</div>
                         <input type="file" id="left" class="hidden-input" accept="image/*">
                     </div>
+                    <div class="image-item" id="right-box">
+                        <div class="image-label" data-i18n="label_right">Right</div>
+                        <input type="file" id="right" class="hidden-input" accept="image/*">
+                    </div>
                     <div class="image-item" id="top-box">
-                        <div class="image-label">Top</div>
+                        <div class="image-label" data-i18n="label_top">Top</div>
                         <input type="file" id="top" class="hidden-input" accept="image/*">
                     </div>
                     <div class="image-item" id="bottom-box">
-                        <div class="image-label">Bottom</div>
+                        <div class="image-label" data-i18n="label_bottom">Bottom</div>
                         <input type="file" id="bottom" class="hidden-input" accept="image/*">
                     </div>
                     <div class="image-item" id="bg-box">
-                        <div class="image-label">BG</div>
+                        <div class="image-label" data-i18n="label_bg">BG</div>
+                        <button id="reset-bg" class="icon-btn-overlay" title="Reset BG" data-i18n-tooltip="btn_reset_bg">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M18 6L6 18M6 6l12 12"></path>
+                            </svg>
+                        </button>
                         <input type="file" id="bg" class="hidden-input" accept="image/*">
                     </div>
                 </div>
-                <button id="reset-bg" class="btn-primary" style="margin-top: 12px; background: #e5e5e5; color: #333;">Reset BG</button>
             </div>
 
             <div class="section">
-                <div class="section-title">Display</div>
+                <div class="section-title" data-i18n="section_display">Display</div>
                 <div class="toggle-row">
-                    <div class="toggle-label">Shadow</div>
+                    <div class="toggle-label" data-i18n="label_shadow">Shadow</div>
                     <div class="toggle-wrapper">
                         <input type="checkbox" id="shadowToggle" class="toggle-checkbox" checked>
                         <label for="shadowToggle" class="toggle-track"></label>
                     </div>
                 </div>
                 <div class="toggle-row">
-                    <div class="toggle-label">Auto rotate</div>
+                    <div class="toggle-label" data-i18n="label_autorotate">Auto rotate</div>
                     <div class="toggle-wrapper">
                         <input type="checkbox" id="rotateToggle" class="toggle-checkbox" checked>
                         <label for="rotateToggle" class="toggle-track"></label>
@@ -87,27 +96,27 @@
             <div class="section">
                 <div class="control-row">
                     <div class="control-label">
-                        <span>Orientation</span>
+                        <span data-i18n="label_orientation">Orientation</span>
                     </div>
-                    <select id="boxOrientation">
-                        <option value="stand">Standing</option>
-                        <option value="lay">Laying</option>
-                    </select>
+                    <div class="segmented-control" id="orientationControl" style="width: 100%;">
+                        <div class="segmented-option active" data-value="stand" style="flex: 1; text-align: center;" data-i18n="val_standing">Standing</div>
+                        <div class="segmented-option" data-value="lay" style="flex: 1; text-align: center;" data-i18n="val_laying">Laying</div>
+                    </div>
                 </div>
 
                 <div class="control-row" id="layFaceGroup" style="display:none;">
                     <div class="control-label">
-                        <span>Laying Face</span>
+                        <span data-i18n="label_laying_face">Laying Face</span>
                     </div>
                     <select id="layFace">
-                        <option value="front">Front Up</option>
-                        <option value="back">Back Up</option>
+                        <option value="front" data-i18n="val_front_up">Front Up</option>
+                        <option value="back" data-i18n="val_back_up">Back Up</option>
                     </select>
                 </div>
 
                 <div class="control-row">
                     <div class="control-label">
-                        <span>Speed</span>
+                        <span data-i18n="label_speed">Speed</span>
                         <!-- <span class="control-value">50%</span> -->
                     </div>
                     <input type="range" id="rotateSpeed" min="0.001" max="0.02" step="0.001" value="0.005">
@@ -115,27 +124,36 @@
             </div>
 
             <div class="section">
-                <div class="section-title">Camera</div>
+                <div class="section-title" data-i18n="section_camera">Camera</div>
                 <div class="control-row">
                     <div class="control-label">
-                        <span>X Rotation</span>
+                        <span data-i18n="label_x_rot">X Rotation</span>
                         <span id="cameraXValue" class="control-value">20°</span>
                     </div>
                     <input type="range" id="cameraX" min="-89" max="89" value="20">
                 </div>
                 <div class="control-row">
                     <div class="control-label">
-                        <span>Y Rotation</span>
+                        <span data-i18n="label_y_rot">Y Rotation</span>
                         <span id="cameraYValue" class="control-value">45°</span>
                     </div>
                     <input type="range" id="cameraY" min="-180" max="180" value="45">
                 </div>
                 <div class="control-row">
                     <div class="control-label">
-                        <span>Distance</span>
+                        <span data-i18n="label_distance">Distance</span>
                         <span id="cameraDistanceValue" class="control-value">2.2</span>
                     </div>
                     <input type="range" id="cameraDistance" min="1.2" max="10" value="2.2" step="0.1">
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title" data-i18n="section_config">Config</div>
+                <div style="display: flex; gap: 8px;">
+                    <button id="saveConfig" class="btn-primary" style="flex: 1; background: #333;" data-i18n="btn_save_config">Save Config</button>
+                    <button id="loadConfigBtn" class="btn-primary" style="flex: 1; background: #e5e5e5; color: #333;" data-i18n="btn_load_config">Load Config</button>
+                    <input type="file" id="loadConfigInput" accept=".json" style="display: none;">
                 </div>
             </div>
 
@@ -145,26 +163,23 @@
                         <path d="M23 4v6h-6M1 20v-6h6"/>
                         <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
                     </svg>
-                    Reset All
+                    <span data-i18n="btn_reset_all">Reset All</span>
                 </button>
                 <div id="status" class="status hidden"></div>
             </div>
-
-            <!-- Download button moved to sidebar due to layout change or keep in toolbar? Design says sidebar has Export PNG -->
-            <!-- But main logic might expect it. Let's add it here as well or map the toolbar button to it -->
         </div>
 
         <div class="preview-area">
             <div id="canvas-container" class="canvas-container"></div>
             
             <div class="toolbar">
-                <button class="tool-btn" id="resetViewBtn" data-tooltip="視点リセット">
+                <button class="tool-btn" id="resetViewBtn" data-tooltip="Reset View" data-i18n-tooltip="tooltip_reset_view">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
                         <circle cx="12" cy="12" r="3"/>
                     </svg>
                 </button>
-                <button class="tool-btn" id="toggleAnimation" data-tooltip="回転 一時停止/再開">
+                <button class="tool-btn" id="toggleAnimation" data-tooltip="Pause/Play" data-i18n-tooltip="tooltip_toggle_anim">
                     <!-- Pause/Play Icon (Start with Pause) -->
                     <svg id="pauseIcon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <rect x="6" y="4" width="4" height="16"></rect>
@@ -174,7 +189,7 @@
                         <polygon points="5 3 19 12 5 21 5 3"></polygon>
                     </svg>
                 </button>
-                <button class="tool-btn" id="download" data-tooltip="画像を保存">
+                <button class="tool-btn" id="download" data-tooltip="Save Image" data-i18n-tooltip="tooltip_download">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/>
                     </svg>
