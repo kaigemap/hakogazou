@@ -564,10 +564,12 @@ select:hover {
     }
 
     /* Fix Horizontal Scroll */
+    /* Fix Horizontal Scroll */
     .sidebar {
-        overflow-x: hidden;
-        width: 100%;
-        box-sizing: border-box; /* Ensure padding doesn't add to width */
+        /* overflow-x: hidden; Removed for root fix */
+        width: auto; /* Allow flex to handle width */
+        max-width: 100%;
+        box-sizing: border-box; 
     }
 }
 
