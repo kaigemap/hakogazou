@@ -10,6 +10,7 @@ let rotateSpeed = 0.005;
 let boxOrientation = 'stand';
 let layFace = 'front';
 let currentLang = localStorage.getItem('lang') || 'ja';
+const faceRotations = { front: 0, back: 0, right: 0, left: 0, top: 0, bottom: 0 };
 
 // three.jsの初期化
 const container = document.getElementById('canvas-container');
@@ -254,6 +255,43 @@ function setupEventListeners() {
         layFaceGroup.style.display = boxOrientation === 'lay' ? 'block' : 'none';
         resetBoxRotationAndPosition();
         resetCamera();
+    });
+  });
+
+  // Texture Rotation
+  document.querySelectorAll('.rotate-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+        e.stopPropagation(); // Stop bubbling to file input or container
+        e.preventDefault();
+
+        const face = e.currentTarget.dataset.face;
+        if (!face) return;
+
+        // Increment rotation
+        faceRotations[face] = (faceRotations[face] + 1) % 4;
+        
+        // Update texture if exists
+        // Update texture if exists
+        const tex = textures[face];
+        if (tex) {
+            // Check if it's a direct texture or wrapped (like bg)
+            const targetTex = tex.texture || tex;
+            
+            targetTex.rotation = faceRotations[face] * (Math.PI / 2);
+            targetTex.center.set(0.5, 0.5); 
+            
+            // If changing dimensions (90/270 deg), might need to regenerate box geometry?
+            // Actually createBox uses image dimensions. Rotating texture doesn't change image.width/height usage in createBox.
+            // But visually it rotates.
+            // If the user wants the BOX dimensions to change to match rotated image... that's complex.
+            // For now, assume just texture rotation is enough as requested ("rotate texture").
+            
+            // Sync with UI Preview
+            const img = document.querySelector(`#${face}-box img`);
+            if (img) {
+                img.style.transform = `rotate(${faceRotations[face] * 90}deg)`;
+            }
+        }
     });
   });
 
@@ -573,6 +611,11 @@ function createImagePreview(input, boxId) {
     img.onload = () => {
       if (icon) icon.style.display = 'none';
       if (text) text.style.display = 'none';
+      
+      // Reset rotation for this face
+      faceRotations[boxId.replace('-box', '')] = 0;
+      img.style.transform = 'rotate(0deg)';
+      
       box.appendChild(img);
     };
     
@@ -581,6 +624,11 @@ function createImagePreview(input, boxId) {
     loader.load(url, (tex) => {
       tex.anisotropy = renderer.capabilities.getMaxAnisotropy();
       tex.colorSpace = THREE.SRGBColorSpace;
+      
+      // Apply rotation
+      tex.center.set(0.5, 0.5);
+      tex.rotation = (faceRotations[key] || 0) * (Math.PI / 2);
+      
       textures[key] = tex;
       createBox();
       updateStatus();
@@ -951,6 +999,7 @@ function saveConfiguration() {
         isRotating: document.getElementById('rotateToggle').checked,
         shadowVisible: document.getElementById('shadowToggle').checked,
         language: currentLang,
+        faceRotations,
         timestamp: new Date().toISOString()
     };
 
@@ -979,6 +1028,22 @@ function loadConfiguration(file) {
             rotateSpeed = config.rotateSpeed || 0.005;
             isRotating = config.isRotating !== undefined ? config.isRotating : true;
             currentLang = config.language || 'ja';
+
+            // Restore rotations
+            const loadedRotations = config.faceRotations || {};
+            // Merge with default/current to ensure all keys exist
+            Object.keys(faceRotations).forEach(key => {
+                faceRotations[key] = loadedRotations[key] || 0;
+                
+                // Sync UI Preview
+                // Wait for images to be potentially loaded if this was a full state restore? 
+                // For now assuming images match key names or relying on user context.
+                // If images are already there, just rotate them.
+                const img = document.querySelector(`#${key}-box img`);
+                if (img) {
+                     img.style.transform = `rotate(${faceRotations[key] * 90}deg)`;
+                }
+            });
 
             // UI Elements Update
             document.getElementById('cameraX').value = config.cameraX || 0;
