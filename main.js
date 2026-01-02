@@ -407,6 +407,71 @@ function setupEventListeners() {
   
   container.addEventListener('mousemove', handleMouseMove);
   container.addEventListener('wheel', handleWheel);
+
+  // タッチ操作対応 (Mobile)
+  container.addEventListener('touchstart', handleTouchStart, { passive: false });
+  container.addEventListener('touchmove', handleTouchMove, { passive: false });
+  container.addEventListener('touchend', handleTouchEnd);
+}
+
+// タッチ操作用変数
+let touchStartX = 0;
+let touchStartY = 0;
+
+function handleTouchStart(e) {
+  if (e.touches.length === 1) {
+    isDragging = true;
+    previousMousePosition = {
+      x: e.touches[0].clientX,
+      y: e.touches[0].clientY
+    };
+    // キャンバス内でのスクロール防止
+    if (e.target === renderer.domElement) {
+        // e.preventDefault(); // passive: falseが必要
+    }
+  }
+}
+
+function handleTouchMove(e) {
+  if (!isDragging || e.touches.length !== 1) return;
+  e.preventDefault(); // スクロール防止
+
+  const touch = e.touches[0];
+  const deltaMove = {
+    x: touch.clientX - previousMousePosition.x,
+    y: touch.clientY - previousMousePosition.y
+  };
+
+  // 感度調整 (タッチは少し感度高めに)
+  const sensitivity = 0.5;
+
+  const currentX = parseFloat(document.getElementById('cameraX').value);
+  const currentY = parseFloat(document.getElementById('cameraY').value);
+  
+  // ドラッグ方向と回転方向（PC版に合わせて調整）
+  let newY = currentY - deltaMove.x * sensitivity; // 横回転 (水平ドラッグ) - Reverse logic included
+  let newX = currentX + deltaMove.y * sensitivity; // 縦回転 (垂直ドラッグ)
+
+  // 制限
+  newX = Math.max(-89, Math.min(89, newX));
+
+  // 値の更新
+  document.getElementById('cameraX').value = newX;
+  document.getElementById('cameraY').value = newY; // Loop? slider max is 180/-180 but logic might wrap? Browser slider doesn't wrap automatically.
+
+  updateSliderValue('cameraX');
+  updateSliderValue('cameraY');
+  
+  updateCameraFromUI();
+
+  previousMousePosition = {
+    x: touch.clientX,
+    y: touch.clientY
+  };
+}
+
+function handleTouchEnd() {
+  isDragging = false;
 }
 
 // カメラ制御

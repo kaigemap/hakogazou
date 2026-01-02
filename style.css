@@ -505,12 +505,48 @@ select:hover {
 }
 .toast.show { opacity: 1; }
 
-@media (max-width: 1200px) {
+@media (max-width: 768px) {
     .container {
         grid-template-columns: 1fr;
-        height: auto;
+        height: calc(100vh - 60px); /* Adjust for header height */
+        display: flex;
+        flex-direction: column;
     }
+
     .preview-area {
-        height: 60vh;
+        height: 45vh; /* Fixed height for 3D view */
+        width: 100%;
+        order: 1; /* Show first */
+    }
+
+    .sidebar {
+        height: 55vh; /* Remaining height */
+        order: 2;
+        padding: 20px;
+        border-right: none;
+        border-top: 1px solid #e5e5e5;
+    }
+
+    .header {
+        padding: 12px 20px;
+    }
+
+    /* Touch Optimizations */
+    .tool-btn {
+        width: 44px;
+        height: 44px;
+    }
+    
+    input[type="range"]::-webkit-slider-thumb {
+        width: 24px;
+        height: 24px;
+    }
+
+    .segmented-option {
+        padding: 8px 12px;
+    }
+
+    select, input[type="text"], .secondary-btn {
+        height: 44px; /* Easier to tap */
     }
 }
