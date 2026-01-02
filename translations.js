@@ -99,6 +99,8 @@ export const translations = {
         face_bottom: "底面",
         face_right: "右側面",
         face_left: "左側面",
-        face_bg: "背景"
+        face_bg: "背景",
+        section_config: "設定保存",
+        section_config: "設定保存",
     }
 };

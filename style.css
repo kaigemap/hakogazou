@@ -455,6 +455,27 @@ select:hover {
     background: #2a2a2a;
 }
 
+.secondary-btn {
+    background: transparent;
+    color: #666;
+    border: 1px solid #e5e5e5;
+    padding: 12px 20px;
+    border-radius: 6px;
+    font-weight: 500;
+    font-size: 0.85em;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.secondary-btn:hover {
+    background: #fafafa;
+    border-color: #d0d0d0;
+    color: #333;
+}
+
 .status {
     margin-top: 1rem;
     padding: 10px;

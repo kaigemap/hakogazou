@@ -137,11 +137,13 @@ function resetCamera() {
 function resetBoxRotationAndPosition() {
   if (!box) return;
 
-  // 自動回転の制御
+  // 自動回転の制御 - ユーザー設定に従うため強制オフは削除
+  /*
   if (boxOrientation === 'lay') {
     isRotating = false;
     document.getElementById('rotateToggle').checked = false;
   }
+  */
 
   const geometry = box.geometry;
   const width = geometry.parameters.width;
@@ -253,6 +255,10 @@ function setupEventListeners() {
         boxOrientation = e.target.dataset.value;
         const layFaceGroup = document.getElementById('layFaceGroup');
         layFaceGroup.style.display = boxOrientation === 'lay' ? 'block' : 'none';
+        
+        // Update controls visibility based on Orientation
+        updateControlsVisibility();
+
         resetBoxRotationAndPosition();
         resetCamera();
     });
@@ -338,6 +344,10 @@ function setupEventListeners() {
   document.getElementById('rotateToggle').addEventListener('change', (e) => {
     isRotating = e.target.checked;
     
+    // Speed visibility
+    const speedGroup = document.getElementById('speedControlGroup');
+    if (speedGroup) speedGroup.style.display = isRotating ? 'flex' : 'none';
+    
     // ツールバーのボタンアイコンも更新
     const pauseIcon = document.getElementById('pauseIcon');
     const playIcon = document.getElementById('playIcon');
@@ -354,6 +364,7 @@ function setupEventListeners() {
 
   document.getElementById('rotateSpeed').addEventListener('input', (e) => {
     rotateSpeed = parseFloat(e.target.value);
+    updateSliderValue('rotateSpeed');
   });
 
   document.getElementById('download').addEventListener('click', () => {
@@ -457,11 +468,16 @@ function updateCameraFromUI() {
 }
 
 // スライダーの値表示を更新
+// スライダーの値表示を更新
 function updateSliderValue(id) {
   const slider = document.getElementById(id);
   const valueDisplay = document.getElementById(`${id}Value`);
   if (slider && valueDisplay) {
-    valueDisplay.textContent = id === 'cameraDistance' ? slider.value : `${slider.value}°`;
+    if (id === 'cameraDistance' || id === 'rotateSpeed') {
+        valueDisplay.textContent = slider.value;
+    } else {
+        valueDisplay.textContent = `${slider.value}°`;
+    }
   }
 }
 
@@ -677,7 +693,7 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('cameraDistance').value = '2.2';
   
   // UIの更新とイベントリスナーの設定
-  ['cameraX', 'cameraY', 'cameraDistance'].forEach(updateSliderValue);
+  ['cameraX', 'cameraY', 'cameraDistance', 'rotateSpeed'].forEach(updateSliderValue);
   
   // カメラの位置を更新
   updateCameraFromUI();
@@ -699,6 +715,7 @@ document.addEventListener('DOMContentLoaded', () => {
   
   // UIの初期化とイベントリスナーの設定
   initializeUI();
+  updateControlsVisibility(); // Initial visibility check
   
   // アニメーション開始
   animate();
@@ -736,7 +753,12 @@ if (toggleAnimBtn) {
         
         // サイドバーのチェックボックスとも同期
         const rotateToggle = document.getElementById('rotateToggle');
-        if (rotateToggle) rotateToggle.checked = isRotating;
+        if (rotateToggle) {
+            rotateToggle.checked = isRotating;
+            // Speed visibility
+            const speedGroup = document.getElementById('speedControlGroup');
+            if (speedGroup) speedGroup.style.display = isRotating ? 'flex' : 'none';
+        }
     });
 }
 
@@ -1012,6 +1034,24 @@ function saveConfiguration() {
     URL.revokeObjectURL(url);
 }
 
+// Controls Visibility Management
+function updateControlsVisibility() {
+    const rotationGroup = document.getElementById('rotationControlsGroup');
+    const toggleAnimBtn = document.getElementById('toggleAnimation');
+    
+    if (boxOrientation === 'stand') {
+        // Show Auto Rotate & Speed Group
+        if (rotationGroup) rotationGroup.style.display = 'block';
+        // Show Toolbar Play/Pause
+        if (toggleAnimBtn) toggleAnimBtn.style.display = ''; // Reset to default (flex/block)
+    } else {
+        // Hide Auto Rotate & Speed Group
+        if (rotationGroup) rotationGroup.style.display = 'none';
+        // Hide Toolbar Play/Pause
+        if (toggleAnimBtn) toggleAnimBtn.style.display = 'none';
+    }
+}
+
 // 設定の読み込み
 function loadConfiguration(file) {
     const reader = new FileReader();
@@ -1074,8 +1114,12 @@ function loadConfiguration(file) {
             updateSliderValue('cameraY');
             updateSliderValue('cameraDistance');
             
+             
             const layFaceGroup = document.getElementById('layFaceGroup');
             layFaceGroup.style.display = boxOrientation === 'lay' ? 'block' : 'none';
+
+            // Sync Rotation Button Visibility
+            updateControlsVisibility();
 
             // Shadow visibility
             if (shadowPlane) shadowPlane.visible = document.getElementById('shadowToggle').checked;
