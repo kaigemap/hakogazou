@@ -379,8 +379,12 @@ function setupEventListeners() {
     // 今のサイズを保存
     const originalSize = renderer.getSize(new THREE.Vector2());
 
-    // 高画質書き出し (2400x2400)
-    const exportSize = 2400;
+    // デバイス判定
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+    // 書き出しサイズ: スマホはメモリ不足防止のため1200px、PCは2400px
+    const exportSize = isMobile ? 1200 : 2400;
+    
     renderer.setSize(exportSize, exportSize, false);
     camera.aspect = 1;
     camera.updateProjectionMatrix();
@@ -402,10 +406,7 @@ function setupEventListeners() {
         const pad = n => n.toString().padStart(2, '0');
         const timestamp = `${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
         const filename = `hakogazou-${timestamp}.png`;
-
-        // デバイス判定
-        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-
+        
         if (!isMobile) {
             // PC: 直接ダウンロード
             const url = URL.createObjectURL(blob);
