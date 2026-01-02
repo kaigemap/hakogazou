@@ -218,9 +218,17 @@ function updateLanguage(lang) {
 // UIの初期化
 function initializeUI() {
   updateLanguage(currentLang);
-  boxOrientation = 'stand'; // Default
-  const activeOrientation = document.querySelector('#orientationControl .segmented-option.active');
-  if (activeOrientation) boxOrientation = activeOrientation.dataset.value;
+  updateLanguage(currentLang);
+  
+  // Force default state to ensure UI is in sync
+  boxOrientation = 'stand';
+  document.querySelectorAll('#orientationControl .segmented-option').forEach(opt => {
+    if (opt.dataset.value === boxOrientation) {
+        opt.classList.add('active');
+    } else {
+        opt.classList.remove('active');
+    }
+  });
 
   layFace = document.getElementById('layFace').value;
   
@@ -1145,11 +1153,14 @@ function loadConfiguration(file) {
             const rotateToggle = document.getElementById('rotateToggle');
             if (rotateToggle) rotateToggle.checked = isRotating;
 
-            showToast('Configuration loaded successfully!', 2000);
+            const t = translations[currentLang];
+            const loadSuccessMsg = (t && t.msg_load_success) ? t.msg_load_success : 'Configuration loaded successfully!';
+            showToast(loadSuccessMsg, 2000);
 
         } catch (err) {
             console.error(err);
-            const msg = (translations[currentLang] && translations[currentLang].msg_load_error) ? translations[currentLang].msg_load_error : 'Error loading config';
+            const t = translations[currentLang];
+            const msg = (t && t.msg_load_error) ? t.msg_load_error : 'Error loading config';
             showToast(msg, 3000);
         }
     };

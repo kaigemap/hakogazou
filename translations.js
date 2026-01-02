@@ -50,6 +50,7 @@ export const translations = {
         section_config: "Config",
         btn_save_config: "Save Config",
         btn_load_config: "Load Config",
+        msg_load_success: "Configuration loaded successfully!",
         msg_load_error: "Invalid config file."
     },
     ja: {
@@ -101,6 +102,9 @@ export const translations = {
         face_left: "左側面",
         face_bg: "背景",
         section_config: "設定保存",
-        section_config: "設定保存",
+        btn_save_config: "設定を保存",
+        btn_load_config: "設定を読み込む",
+        msg_load_success: "設定を読み込みました！",
+        msg_load_error: "設定ファイルの読み込みに失敗しました。"
     }
 };
