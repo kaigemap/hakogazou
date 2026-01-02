@@ -231,6 +231,22 @@
     <!-- Toast -->
     <div id="toast" class="toast hidden"></div>
 
+    <!-- Image Preview Modal (for Mobile Fallback) -->
+    <div id="imageModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span data-i18n="modal_success">Long press to save</span>
+                <button id="closeModal" class="close-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <img id="previewImage" src="" alt="Preview">
+            </div>
+            <div class="modal-footer">
+                <p data-i18n="modal_hint">Long press the image to save it to your Photos.</p>
+            </div>
+        </div>
+    </div>
     <script type="module" src="main.js"></script>
 </body>
 </html>
+```

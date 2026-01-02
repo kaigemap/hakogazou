@@ -375,31 +375,87 @@ function setupEventListeners() {
     updateSliderValue('rotateSpeed');
   });
 
-  document.getElementById('download').addEventListener('click', () => {
+  document.getElementById('download').addEventListener('click', async () => {
     // 今のサイズを保存
     const originalSize = renderer.getSize(new THREE.Vector2());
 
-    // 一時的に 1200x1200 に (スマホでのクラッシュ防止のため解像度を下げる)
-    const exportSize = 1200;
+    // 高画質書き出し (2400x2400)
+    const exportSize = 2400;
     renderer.setSize(exportSize, exportSize, false);
     camera.aspect = 1;
     camera.updateProjectionMatrix();
-    renderer.render(scene, camera); // 明示的に再描画
+    renderer.render(scene, camera);
 
-    // 書き出し
-    const link = document.createElement('a');
-    const now = new Date();
-    const pad = n => n.toString().padStart(2, '0');
-    const timestamp = `${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
-    link.download = `hakogazou-${timestamp}.png`;
-    link.href = renderer.domElement.toDataURL('image/png');
-    link.click();
+    // toBlob (Async) for memory efficiency & native sharing
+    renderer.domElement.toBlob(async (blob) => {
+        // 元のサイズに戻す
+        renderer.setSize(originalSize.x, originalSize.y, false);
+        camera.aspect = originalSize.x / originalSize.y;
+        camera.updateProjectionMatrix();
 
-    // 元のサイズに戻す
-    renderer.setSize(originalSize.x, originalSize.y, false);
-    camera.aspect = originalSize.x / originalSize.y;
-    camera.updateProjectionMatrix();
+        if (!blob) {
+            showToast('Error generating image', 3000);
+            return;
+        }
+
+        const now = new Date();
+        const pad = n => n.toString().padStart(2, '0');
+        const timestamp = `${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
+        const filename = `hakogazou-${timestamp}.png`;
+
+        // デバイス判定
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+        if (!isMobile) {
+            // PC: 直接ダウンロード
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            link.click();
+            URL.revokeObjectURL(url);
+        } else {
+            // Mobile: Share API or Modal
+            const file = new File([blob], filename, { type: 'image/png' });
+
+            // Try Native Share (Web Share API)
+            if (navigator.share && navigator.canShare({ files: [file] })) {
+                try {
+                    await navigator.share({
+                        files: [file],
+                        title: 'Hakogazou',
+                        text: 'Created with Hakogazou Box Generator'
+                    });
+                    showToast('Shared successfully!', 2000);
+                } catch (err) {
+                    if (err.name !== 'AbortError') {
+                        console.error('Share failed:', err);
+                        showPreviewModal(blob); // Fallback if share fails (but not if user cancelled)
+                    }
+                }
+            } else {
+                // Fallback: Show Image in Modal for Long-Press Save
+                showPreviewModal(blob);
+            }
+        }
+
+    }, 'image/png');
   });
+
+  // Modal Close
+  const modal = document.getElementById('imageModal');
+  const closeModal = document.getElementById('closeModal');
+  if (closeModal) {
+      closeModal.addEventListener('click', () => {
+          modal.classList.add('hidden');
+          modal.classList.remove('show'); // Just in case
+          // Clear memory
+          const img = document.getElementById('previewImage');
+          if (img.src) URL.revokeObjectURL(img.src);
+          img.src = '';
+      });
+  }
+
 
   // マウス操作
   container.addEventListener('mousedown', (e) => { isDragging = true; });
@@ -1243,4 +1299,16 @@ function loadConfiguration(file) {
         }
     };
     reader.readAsText(file);
+}
+
+// プレビューモーダル表示
+function showPreviewModal(blob) {
+    const modal = document.getElementById('imageModal');
+    const img = document.getElementById('previewImage');
+    
+    if (img.src) URL.revokeObjectURL(img.src); // Cleanup previous
+    img.src = URL.createObjectURL(blob);
+    
+    modal.classList.remove('hidden');
+    modal.classList.add('show');
 }
