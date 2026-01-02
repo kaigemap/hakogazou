@@ -569,11 +569,6 @@ select:hover {
         width: 100%;
         box-sizing: border-box; /* Ensure padding doesn't add to width */
     }
-
-    .sidebar img {
-        max-width: 100%;
-        height: auto;
-    }
 }
 
 /* Modal Styles */
