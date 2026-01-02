@@ -379,8 +379,9 @@ function setupEventListeners() {
     // 今のサイズを保存
     const originalSize = renderer.getSize(new THREE.Vector2());
 
-    // 一時的に2400x2400に
-    renderer.setSize(2400, 2400, false);
+    // 一時的に 1200x1200 に (スマホでのクラッシュ防止のため解像度を下げる)
+    const exportSize = 1200;
+    renderer.setSize(exportSize, exportSize, false);
     camera.aspect = 1;
     camera.updateProjectionMatrix();
     renderer.render(scene, camera); // 明示的に再描画
@@ -726,12 +727,16 @@ function createImagePreview(input, boxId) {
 }
 
 // レンダラーのリサイズ処理
+// レンダラーのリサイズ処理
 function resizeRenderer() {
   const width = container.clientWidth;
   const height = container.clientHeight;
   renderer.setSize(width, height);
   camera.aspect = width / height;
   camera.updateProjectionMatrix();
+  
+  // アスペクト比が変わった場合にカメラ位置を再調整（特にスマホ縦向き対策）
+  updateCameraFromUI();
 }
 
 // ステータスの更新
@@ -1033,9 +1038,17 @@ function initCamera() {
   const xRad = currentX * Math.PI / 180;
   const yRad = currentY * Math.PI / 180;
   
-  camera.position.x = currentDistance * Math.cos(xRad) * Math.sin(yRad);
-  camera.position.y = currentDistance * Math.sin(xRad) + targetY;
-  camera.position.z = currentDistance * Math.cos(xRad) * Math.cos(yRad);
+  // モバイル（縦長画面）対応: アスペクト比が1未満の場合、少し距離を離す
+  let distanceMultiplier = 1.0;
+  if (camera.aspect < 0.8) {
+    distanceMultiplier = 1.0 / camera.aspect * 0.8; // 単純な逆数だと遠すぎるため調整
+  }
+  
+  const finalDistance = currentDistance * distanceMultiplier;
+
+  camera.position.x = finalDistance * Math.cos(xRad) * Math.sin(yRad);
+  camera.position.y = finalDistance * Math.sin(xRad) + targetY;
+  camera.position.z = finalDistance * Math.cos(xRad) * Math.cos(yRad);
   camera.lookAt(0, targetY, 0);
 }
 
