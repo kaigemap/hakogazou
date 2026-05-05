@@ -1,5 +1,4 @@
 import * as THREE from 'three';
-import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { translations } from './translations.js';
 
 // グローバル変数
@@ -10,7 +9,6 @@ let isRotating = true;
 let rotateSpeed = 0.005;
 let boxOrientation = 'stand';
 let layFace = 'front';
-let renderVersion = localStorage.getItem('renderVersion') || 'v1';
 let currentLang = localStorage.getItem('lang') || 'ja';
 const faceRotations = { front: 0, back: 0, right: 0, left: 0, top: 0, bottom: 0 };
 
@@ -98,26 +96,25 @@ spotLight2.castShadow = false; // 影はオフ
 scene.add(spotLight2);
 
 function applyRenderPreset() {
-  const isV2 = renderVersion === 'v2';
   const shadowToggle = document.getElementById('shadowToggle');
   const shadowEnabled = shadowToggle ? shadowToggle.checked : true;
 
-  renderer.shadowMap.enabled = isV2;
+  renderer.shadowMap.enabled = false;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-  renderer.toneMapping = isV2 ? THREE.ACESFilmicToneMapping : THREE.LinearToneMapping;
-  renderer.toneMappingExposure = isV2 ? 1.25 : 1.8;
+  renderer.toneMapping = THREE.LinearToneMapping;
+  renderer.toneMappingExposure = 1.8;
 
-  ground.material.opacity = isV2 && shadowEnabled ? 0.18 : 0;
+  ground.material.opacity = 0;
   ground.material.needsUpdate = true;
 
-  ambientLight.intensity = isV2 ? 0.42 : 0.6;
-  directionalLight.castShadow = isV2;
-  directionalLight.intensity = isV2 ? 1.15 : 0.5;
-  directionalLight.position.set(isV2 ? 3.5 : 0, isV2 ? 5.5 : 2, isV2 ? 2.5 : 0);
+  ambientLight.intensity = 0.6;
+  directionalLight.castShadow = false;
+  directionalLight.intensity = 0.5;
+  directionalLight.position.set(0, 2, 0);
   directionalLight.shadow.mapSize.set(2048, 2048);
   directionalLight.shadow.bias = -0.0004;
   directionalLight.shadow.normalBias = 0.02;
-  directionalLight.shadow.radius = isV2 ? 6 : 1;
+  directionalLight.shadow.radius = 1;
   directionalLight.shadow.camera.near = 0.5;
   directionalLight.shadow.camera.far = 12;
   directionalLight.shadow.camera.left = -4;
@@ -125,18 +122,18 @@ function applyRenderPreset() {
   directionalLight.shadow.camera.top = 4;
   directionalLight.shadow.camera.bottom = -4;
 
-  pointLight.intensity = isV2 ? 0.12 : 0.2;
-  fillLight.intensity = isV2 ? 0.22 : 0.3;
-  bounceLight.intensity = isV2 ? 0.18 : 0.3;
-  spotLight1.intensity = isV2 ? 0.18 : 0.3;
-  spotLight2.intensity = isV2 ? 0.12 : 0.2;
+  pointLight.intensity = 0.2;
+  fillLight.intensity = 0.3;
+  bounceLight.intensity = 0.3;
+  spotLight1.intensity = 0.3;
+  spotLight2.intensity = 0.2;
 
   if (box) {
-    box.castShadow = isV2;
-    box.receiveShadow = isV2;
+    box.castShadow = false;
+    box.receiveShadow = false;
   }
   if (shadowPlane && shadowPlane.material) {
-    shadowPlane.material.opacity = isV2 ? 0.18 : 0.8;
+    shadowPlane.material.opacity = 0.8;
     shadowPlane.visible = shadowEnabled;
   }
 }
@@ -198,7 +195,7 @@ function resetBoxRotationAndPosition() {
   const height = geometry.parameters.height;
   const depth = geometry.parameters.depth;
   
-  const shadowScale = renderVersion === 'v2' ? 1.08 : 1.5; // 余白分
+  const shadowScale = 1.5; // 余白分
   
   // 影の回転をリセット（アニメーションの残留を防ぐ）
   if (shadowPlane) shadowPlane.rotation.z = 0;
@@ -217,17 +214,10 @@ function resetBoxRotationAndPosition() {
       box.position.y = ground.position.y + (depth / 2) + 0.001;
 
       // 寝かせた時のライト位置
-      if (renderVersion === 'v2') {
-        directionalLight.position.set(3.5, 5.5, 2.5);
-        directionalLight.intensity = 1.05;
-        pointLight.position.set(-2, 3, -2);
-        fillLight.position.set(2, 3, 2);
-      } else {
-        directionalLight.position.set(0, 30, -15);
-        directionalLight.intensity = 0.6;
-        pointLight.position.set(-2, 4, -2);
-        fillLight.position.set(2, 4, 2);
-      }
+      directionalLight.position.set(0, 30, -15);
+      directionalLight.intensity = 0.6;
+      pointLight.position.set(-2, 4, -2);
+      fillLight.position.set(2, 4, 2);
   } else {
     box.rotation.set(0, 0, 0);
     // 接地面: width x depth
@@ -236,17 +226,10 @@ function resetBoxRotationAndPosition() {
     box.position.y = ground.position.y + (height / 2) + 0.001;
 
     // 立てた時のライト位置を設定
-    if (renderVersion === 'v2') {
-      directionalLight.position.set(3.5, 5.5, 2.5);
-      directionalLight.intensity = 1.15;
-      pointLight.position.set(-2.5, 2.2, -2.5);
-      fillLight.position.set(-3, 4, -4);
-    } else {
-      directionalLight.position.set(5, 10, 3);
-      directionalLight.intensity = 1.4;
-      pointLight.position.set(-3, 3, -3);
-      fillLight.position.set(-3, 5, -5);
-    }
+    directionalLight.position.set(5, 10, 3);
+    directionalLight.intensity = 1.4;
+    pointLight.position.set(-3, 3, -3);
+    fillLight.position.set(-3, 5, -5);
   }
 
   applyRenderPreset();
@@ -294,14 +277,6 @@ function initializeUI() {
     }
   });
 
-  document.querySelectorAll('#renderVersionControl .segmented-option').forEach(opt => {
-    if (opt.dataset.value === renderVersion) {
-      opt.classList.add('active');
-    } else {
-      opt.classList.remove('active');
-    }
-  });
-
   layFace = document.getElementById('layFace').value;
   
   const layFaceGroup = document.getElementById('layFaceGroup');
@@ -341,20 +316,6 @@ function setupEventListeners() {
 
         resetBoxRotationAndPosition();
         resetCamera();
-    });
-  });
-
-  document.querySelectorAll('#renderVersionControl .segmented-option').forEach(opt => {
-    opt.addEventListener('click', (e) => {
-      document.querySelectorAll('#renderVersionControl .segmented-option').forEach(el => el.classList.remove('active'));
-      e.target.classList.add('active');
-
-      renderVersion = e.target.dataset.value;
-      localStorage.setItem('renderVersion', renderVersion);
-      applyRenderPreset();
-      if (Object.keys(textures).some(key => key !== 'bg')) {
-        createBox();
-      }
     });
   });
 
@@ -716,57 +677,52 @@ function createBox() {
 
   let geometry;
 
-  if (renderVersion === 'v2') {
-    const radius = Math.min(width, height, depth) * 0.035;
-    geometry = new RoundedBoxGeometry(width, height, depth, 10, radius);
-  } else {
-    // 面取りのパラメータ調整
-    const bevelSize = 0.01; // 2mm相当の面取り
-    const segments = 128; // さらに細かい分割でスムーズな曲面を実現
+  // 面取りのパラメータ調整
+  const bevelSize = 0.01; // 2mm相当の面取り
+  const segments = 128; // さらに細かい分割でスムーズな曲面を実現
 
-    // ボックスジオメトリ
-    geometry = new THREE.BoxGeometry(
-      width,
-      height,
-      depth,
-      segments,
-      segments,
-      segments
-    );
+  // ボックスジオメトリ
+  geometry = new THREE.BoxGeometry(
+    width,
+    height,
+    depth,
+    segments,
+    segments,
+    segments
+  );
 
-    // 頂点位置の取得と加工
-    const positions = geometry.attributes.position.array;
+  // 頂点位置の取得と加工
+  const positions = geometry.attributes.position.array;
 
-    // 各頂点に対して面取りを適用
-    for (let i = 0; i < positions.length; i += 3) {
-      const x = positions[i];
-      const y = positions[i + 1];
-      const z = positions[i + 2];
+  // 各頂点に対して面取りを適用
+  for (let i = 0; i < positions.length; i += 3) {
+    const x = positions[i];
+    const y = positions[i + 1];
+    const z = positions[i + 2];
 
-      // エッジからの距離を計算
-      const edgeDistX = Math.abs(Math.abs(x) - width/2);
-      const edgeDistY = Math.abs(Math.abs(y) - height/2);
-      const edgeDistZ = Math.abs(Math.abs(z) - depth/2);
+    // エッジからの距離を計算
+    const edgeDistX = Math.abs(Math.abs(x) - width/2);
+    const edgeDistY = Math.abs(Math.abs(y) - height/2);
+    const edgeDistZ = Math.abs(Math.abs(z) - depth/2);
 
-      // エッジ検出の閾値を調整
-      const minDist = Math.min(edgeDistX, edgeDistY, edgeDistZ);
+    // エッジ検出の閾値を調整
+    const minDist = Math.min(edgeDistX, edgeDistY, edgeDistZ);
 
-      if (minDist < bevelSize) {
-        // より自然な面取りカーブの生成
-        const t = minDist / bevelSize;
-        const smooth = 1.0 - Math.pow(1.0 - t, 2); // 2次曲線による補間
+    if (minDist < bevelSize) {
+      // より自然な面取りカーブの生成
+      const t = minDist / bevelSize;
+      const smooth = 1.0 - Math.pow(1.0 - t, 2); // 2次曲線による補間
 
-        // エッジ部分の頂点移動を調整
-        const edgeFactor = 0.95; // エッジの鋭さを調整
-        if (edgeDistX < bevelSize) {
-          positions[i] *= (width - bevelSize * edgeFactor) / width;
-        }
-        if (edgeDistY < bevelSize) {
-          positions[i + 1] *= (height - bevelSize * edgeFactor) / height;
-        }
-        if (edgeDistZ < bevelSize) {
-          positions[i + 2] *= (depth - bevelSize * edgeFactor) / depth;
-        }
+      // エッジ部分の頂点移動を調整
+      const edgeFactor = 0.95; // エッジの鋭さを調整
+      if (edgeDistX < bevelSize) {
+        positions[i] *= (width - bevelSize * edgeFactor) / width;
+      }
+      if (edgeDistY < bevelSize) {
+        positions[i + 1] *= (height - bevelSize * edgeFactor) / height;
+      }
+      if (edgeDistZ < bevelSize) {
+        positions[i + 2] *= (depth - bevelSize * edgeFactor) / depth;
       }
     }
   }
@@ -785,8 +741,8 @@ function createBox() {
   ];
   
   box = new THREE.Mesh(geometry, materials);
-  box.castShadow = renderVersion === 'v2';
-  box.receiveShadow = renderVersion === 'v2';
+  box.castShadow = false;
+  box.receiveShadow = false;
 
   // テクスチャによる擬似影 (Fake Shadow)
   // 以前の影があれば削除
@@ -796,7 +752,7 @@ function createBox() {
   const shadowMaterial = new THREE.MeshBasicMaterial({
     map: shadowTexture,
     transparent: true,
-    opacity: renderVersion === 'v2' ? 0.18 : 0.8,
+    opacity: 0.8,
     depthWrite: false, 
   });
   
@@ -815,21 +771,6 @@ function createBox() {
 
 // 箱の面のマテリアルを作成する関数
 function createSideMaterial(texture) {
-  if (renderVersion === 'v2') {
-    return new THREE.MeshPhysicalMaterial({
-      map: texture,
-      roughness: 0.48,
-      metalness: 0.0,
-      clearcoat: 0.18,
-      clearcoatRoughness: 0.72,
-      sheen: 0.25,
-      sheenRoughness: 0.9,
-      envMapIntensity: 0.9,
-      side: THREE.FrontSide,
-      shadowSide: THREE.FrontSide,
-    });
-  }
-
   return new THREE.MeshPhysicalMaterial({
     map: texture,
     roughness: 0.2,        // よりシャープな反射
@@ -1015,7 +956,7 @@ if (toggleAnimBtn) {
 // 擬似影用のテクスチャ生成
 function generateShadowTexture() {
   const canvas = document.createElement('canvas');
-  const size = renderVersion === 'v2' ? 512 : 128;
+  const size = 128;
   canvas.width = size;
   canvas.height = size;
   const context = canvas.getContext('2d');
@@ -1029,14 +970,8 @@ function generateShadowTexture() {
     canvas.width / 2
   );
 
-  if (renderVersion === 'v2') {
-    gradient.addColorStop(0, 'rgba(0, 0, 0, 0.34)');
-    gradient.addColorStop(0.42, 'rgba(0, 0, 0, 0.16)');
-    gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
-  } else {
-    gradient.addColorStop(0, 'rgba(0, 0, 0, 0.6)'); // 中心は少し濃く
-    gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');   // 外側は透明
-  }
+  gradient.addColorStop(0, 'rgba(0, 0, 0, 0.6)'); // 中心は少し濃く
+  gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');   // 外側は透明
 
   context.fillStyle = gradient;
   context.fillRect(0, 0, canvas.width, canvas.height);
@@ -1281,7 +1216,6 @@ function saveConfiguration() {
     const config = {
         boxOrientation,
         layFace,
-        renderVersion,
         rotateSpeed,
         cameraX: document.getElementById('cameraX').value,
         cameraY: document.getElementById('cameraY').value,
@@ -1333,7 +1267,6 @@ function loadConfiguration(file) {
             // Apply values
             boxOrientation = config.boxOrientation;
             layFace = config.layFace || 'front';
-            renderVersion = config.renderVersion || 'v1';
             rotateSpeed = config.rotateSpeed || 0.005;
             isRotating = config.isRotating !== undefined ? config.isRotating : true;
             currentLang = config.language || 'ja';
@@ -1373,15 +1306,6 @@ function loadConfiguration(file) {
                     opt.classList.remove('active');
                 }
             });
-
-            document.querySelectorAll('#renderVersionControl .segmented-option').forEach(opt => {
-                if (opt.dataset.value === renderVersion) {
-                    opt.classList.add('active');
-                } else {
-                    opt.classList.remove('active');
-                }
-            });
-            localStorage.setItem('renderVersion', renderVersion);
 
             // Update Language
             localStorage.setItem('lang', currentLang);
