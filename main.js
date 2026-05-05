@@ -399,23 +399,7 @@ function setupEventListeners() {
 
   document.getElementById('rotateToggle').addEventListener('change', (e) => {
     isRotating = e.target.checked;
-    
-    // Speed visibility
-    const speedGroup = document.getElementById('speedControlGroup');
-    if (speedGroup) speedGroup.style.display = isRotating ? 'block' : 'none';
-    
-    // ツールバーのボタンアイコンも更新
-    const pauseIcon = document.getElementById('pauseIcon');
-    const playIcon = document.getElementById('playIcon');
-    if (pauseIcon && playIcon) {
-        if (isRotating) {
-            pauseIcon.classList.remove('hidden');
-            playIcon.classList.add('hidden');
-        } else {
-            pauseIcon.classList.add('hidden');
-            playIcon.classList.remove('hidden');
-        }
-    }
+    syncRotationControls();
   });
 
   document.getElementById('rotateSpeed').addEventListener('input', (e) => {
@@ -507,12 +491,18 @@ function setupEventListeners() {
 
 
   // マウス操作
-  container.addEventListener('mousedown', (e) => { isDragging = true; });
+  container.addEventListener('mousedown', (e) => {
+    isDragging = true;
+    previewPointerStart = { x: e.clientX, y: e.clientY };
+    previewMoved = false;
+    previousMousePosition = { x: e.offsetX, y: e.offsetY };
+  });
   container.addEventListener('mouseup', () => { isDragging = false; });
   container.addEventListener('mouseleave', () => { isDragging = false; });
   
   container.addEventListener('mousemove', handleMouseMove);
   container.addEventListener('wheel', handleWheel);
+  container.addEventListener('click', handlePreviewTap);
 
   // タッチ操作対応 (Mobile)
   container.addEventListener('touchstart', handleTouchStart, { passive: false });
@@ -523,10 +513,17 @@ function setupEventListeners() {
 // タッチ操作用変数
 let touchStartX = 0;
 let touchStartY = 0;
+let previewPointerStart = null;
+let previewMoved = false;
 
 function handleTouchStart(e) {
   if (e.touches.length === 1) {
     isDragging = true;
+    previewPointerStart = {
+      x: e.touches[0].clientX,
+      y: e.touches[0].clientY
+    };
+    previewMoved = false;
     previousMousePosition = {
       x: e.touches[0].clientX,
       y: e.touches[0].clientY
@@ -547,6 +544,11 @@ function handleTouchMove(e) {
     x: touch.clientX - previousMousePosition.x,
     y: touch.clientY - previousMousePosition.y
   };
+  if (previewPointerStart) {
+    const totalMoveX = touch.clientX - previewPointerStart.x;
+    const totalMoveY = touch.clientY - previewPointerStart.y;
+    if (Math.hypot(totalMoveX, totalMoveY) > 6) previewMoved = true;
+  }
 
   // 感度調整 (タッチは少し感度高めに)
   const sensitivity = 0.5;
@@ -580,6 +582,14 @@ function handleTouchEnd() {
   isDragging = false;
 }
 
+function handlePreviewTap() {
+  if (previewMoved) {
+    previewMoved = false;
+    return;
+  }
+  toggleRotation();
+}
+
 // カメラ制御
 let isDragging = false;
 let previousMousePosition = { x: 0, y: 0 };
@@ -591,6 +601,12 @@ function handleMouseMove(e) {
   };
 
   if (isDragging) {
+    if (previewPointerStart) {
+      const totalMoveX = e.clientX - previewPointerStart.x;
+      const totalMoveY = e.clientY - previewPointerStart.y;
+      if (Math.hypot(totalMoveX, totalMoveY) > 6) previewMoved = true;
+    }
+
     const xAngle = parseFloat(document.getElementById('cameraX').value);
     const yAngle = parseFloat(document.getElementById('cameraY').value);
     
@@ -658,6 +674,20 @@ function updateSliderValue(id) {
         valueDisplay.textContent = `${slider.value}°`;
     }
   }
+}
+
+function syncRotationControls() {
+  const rotateToggle = document.getElementById('rotateToggle');
+  if (rotateToggle) rotateToggle.checked = isRotating;
+
+  const speedGroup = document.getElementById('speedControlGroup');
+  if (speedGroup) speedGroup.style.display = isRotating ? 'block' : 'none';
+}
+
+function toggleRotation() {
+  if (boxOrientation !== 'stand') return;
+  isRotating = !isRotating;
+  syncRotationControls();
 }
 
 // 箱の作成
@@ -921,37 +951,6 @@ if (resetAllBtn) {
         }
     });
 }
-
-// アニメーション一時停止/再開 - ツールバーへ移動
-const toggleAnimBtn = document.getElementById('toggleAnimation');
-const pauseIcon = document.getElementById('pauseIcon');
-const playIcon = document.getElementById('playIcon');
-
-if (toggleAnimBtn) {
-    toggleAnimBtn.addEventListener('click', () => {
-        isRotating = !isRotating;
-        
-        // アイコン切り替え
-        if (isRotating) {
-            pauseIcon.classList.remove('hidden');
-            playIcon.classList.add('hidden');
-        } else {
-            pauseIcon.classList.add('hidden');
-            playIcon.classList.remove('hidden');
-        }
-        
-        // サイドバーのチェックボックスとも同期
-        const rotateToggle = document.getElementById('rotateToggle');
-        if (rotateToggle) {
-            rotateToggle.checked = isRotating;
-            // Speed visibility
-            const speedGroup = document.getElementById('speedControlGroup');
-            if (speedGroup) speedGroup.style.display = isRotating ? 'block' : 'none';
-        }
-    });
-}
-
-// 以前のリセットボタンリスナーは削除（IDが変わったため自然に無効化されるが、念のためクリーンアップ）
 
 // 擬似影用のテクスチャ生成
 function generateShadowTexture() {
@@ -1239,18 +1238,11 @@ function saveConfiguration() {
 // Controls Visibility Management
 function updateControlsVisibility() {
     const rotationGroup = document.getElementById('rotationControlsGroup');
-    const toggleAnimBtn = document.getElementById('toggleAnimation');
     
     if (boxOrientation === 'stand') {
-        // Show Auto Rotate & Speed Group
         if (rotationGroup) rotationGroup.style.display = 'block';
-        // Show Toolbar Play/Pause
-        if (toggleAnimBtn) toggleAnimBtn.style.display = ''; // Reset to default (flex/block)
     } else {
-        // Hide Auto Rotate & Speed Group
         if (rotationGroup) rotationGroup.style.display = 'none';
-        // Hide Toolbar Play/Pause
-        if (toggleAnimBtn) toggleAnimBtn.style.display = 'none';
     }
 }
 
@@ -1334,23 +1326,7 @@ function loadConfiguration(file) {
                 resetBoxRotationAndPosition();
             }
             updateCameraFromUI();
-            
-            // Animation state
-            const pauseIcon = document.getElementById('pauseIcon');
-            const playIcon = document.getElementById('playIcon');
-            if (pauseIcon && playIcon) {
-                if (isRotating) {
-                    pauseIcon.classList.remove('hidden');
-                    playIcon.classList.add('hidden');
-                } else {
-                    pauseIcon.classList.add('hidden');
-                    playIcon.classList.remove('hidden');
-                }
-            }
-
-            // Sync visual checkbox state
-            const rotateToggle = document.getElementById('rotateToggle');
-            if (rotateToggle) rotateToggle.checked = isRotating;
+            syncRotationControls();
 
             const t = translations[currentLang];
             const loadSuccessMsg = (t && t.msg_load_success) ? t.msg_load_success : 'Configuration loaded successfully!';

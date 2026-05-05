@@ -109,25 +109,11 @@
             <div id="canvas-container" class="canvas-container"></div>
 
             <div class="toolbar">
-                <button class="tool-btn" id="resetViewBtn" data-tooltip="Reset View" data-i18n-tooltip="tooltip_reset_view">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                        <circle cx="12" cy="12" r="3"/>
-                    </svg>
-                </button>
-                <button class="tool-btn" id="toggleAnimation" data-tooltip="Pause/Play" data-i18n-tooltip="tooltip_toggle_anim">
-                    <svg id="pauseIcon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <rect x="6" y="4" width="4" height="16"></rect>
-                        <rect x="14" y="4" width="4" height="16"></rect>
-                    </svg>
-                    <svg id="playIcon" class="hidden" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <polygon points="5 3 19 12 5 21 5 3"></polygon>
-                    </svg>
-                </button>
-                <button class="tool-btn" id="download" data-tooltip="Save Image" data-i18n-tooltip="tooltip_download">
+                <button class="tool-btn save-image-btn" id="download" data-tooltip="Save Image" data-i18n-tooltip="tooltip_download">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/>
                     </svg>
+                    <span data-i18n="tooltip_download">Save Image</span>
                 </button>
             </div>
         </main>
@@ -215,13 +201,20 @@
                     </div>
                     <input type="range" id="cameraDistance" min="1.2" max="10" value="2.2" step="0.1">
                 </div>
+                <button class="secondary-btn" id="resetViewBtn" data-i18n-tooltip="tooltip_reset_view">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                        <circle cx="12" cy="12" r="3"/>
+                    </svg>
+                    <span data-i18n="tooltip_reset_view">Reset View</span>
+                </button>
                 </section>
 
                 <section class="section">
                 <div class="section-title" data-i18n="section_config">Config</div>
                 <div class="button-row">
-                    <button id="saveConfig" class="btn-primary" data-i18n="btn_save_config">Save Config</button>
-                    <button id="loadConfigBtn" class="secondary-btn" data-i18n="btn_load_config">Load Config</button>
+                    <button id="saveConfig" class="secondary-btn subtle-btn" data-i18n="btn_save_config">Save Config</button>
+                    <button id="loadConfigBtn" class="secondary-btn subtle-btn" data-i18n="btn_load_config">Load Config</button>
                     <input type="file" id="loadConfigInput" accept=".json" style="display: none;">
                 </div>
                 </section>

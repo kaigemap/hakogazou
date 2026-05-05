@@ -543,7 +543,7 @@ select:hover {
 }
 
 .tool-btn {
-    width: 36px;
+    min-width: 36px;
     height: 36px;
     background: transparent;
     border: none;
@@ -556,9 +556,28 @@ select:hover {
     justify-content: center;
 }
 
+.save-image-btn {
+    width: auto;
+    gap: 8px;
+    padding: 0 14px;
+    background: #fff;
+    color: var(--foreground);
+    font-size: 0.82rem;
+    font-weight: 600;
+}
+
+.save-image-btn span {
+    white-space: nowrap;
+}
+
 .tool-btn:hover {
     background: rgba(255,255,255,0.08);
     color: #fff;
+}
+
+.save-image-btn:hover {
+    background: #f4f4f5;
+    color: var(--foreground);
 }
 
 .btn-primary {
@@ -599,6 +618,11 @@ select:hover {
     background: var(--accent);
     border-color: #d4d4d8;
     color: var(--foreground);
+}
+
+.subtle-btn {
+    color: var(--muted);
+    font-weight: 500;
 }
 
 .button-row {
@@ -736,6 +760,11 @@ select:hover {
     .toolbar .tool-btn {
         color: #fff; /* Ensure icons are white */
         filter: drop-shadow(0 1px 2px rgba(0,0,0,0.5)); /* Add shadow for readability against any background */
+    }
+
+    .toolbar .save-image-btn {
+        color: var(--foreground);
+        filter: none;
     }
 
     .button-row {
