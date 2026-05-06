@@ -107,10 +107,7 @@ function applyRenderPreset() {
   ground.material.opacity = 0;
   ground.material.needsUpdate = true;
 
-  ambientLight.intensity = 0.6;
   directionalLight.castShadow = false;
-  directionalLight.intensity = 0.5;
-  directionalLight.position.set(0, 2, 0);
   directionalLight.shadow.mapSize.set(2048, 2048);
   directionalLight.shadow.bias = -0.0004;
   directionalLight.shadow.normalBias = 0.02;
@@ -121,12 +118,6 @@ function applyRenderPreset() {
   directionalLight.shadow.camera.right = 4;
   directionalLight.shadow.camera.top = 4;
   directionalLight.shadow.camera.bottom = -4;
-
-  pointLight.intensity = 0.2;
-  fillLight.intensity = 0.3;
-  bounceLight.intensity = 0.3;
-  spotLight1.intensity = 0.3;
-  spotLight2.intensity = 0.2;
 
   if (box) {
     box.castShadow = false;
